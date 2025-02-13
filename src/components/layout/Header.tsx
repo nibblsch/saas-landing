@@ -21,7 +21,7 @@ export default function Header() {
             Pricing
           </Link>
           <Button onClick={() => console.log('Open signup modal')}>
-            Get Started Now
+            Sign Up
           </Button>
         </div>
       </nav>

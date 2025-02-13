@@ -1,10 +1,16 @@
 'use client' // Add this since we're using onClick
 
+import { useState } from 'react' // Add this import
 import { Button } from '@/components/ui/Button'
+import { Modal } from '@/components/ui/Modal'
+import { SignupForm } from '@/components/auth/SignupForm'
 import Header from '@/components/layout/Header'
 import Footer from '@/components/layout/Footer'
 
 export default function HomePage() {
+  // Add state for modal
+  const [isSignupOpen, setIsSignupOpen] = useState(false)
+  
   return (
     <div className="min-h-screen flex flex-col">
       <Header />
@@ -12,10 +18,10 @@ export default function HomePage() {
         {/* Hero Section */}
         <section className="px-4 py-20 text-center">
           <h1 className="text-4xl font-bold tracking-tight sm:text-6xl">
-            BabyGPT
+          Your Personal AI-Powered Parenting Expert
           </h1>
           <p className="mt-6 text-lg text-gray-600 max-w-3xl mx-auto">
-          Your Personal AI-Powered Parenting Expert
+          Get instant, reliable answers to all your parenting questions - from feeding schedules to sleep training
           </p>
           <div className="mt-10">
             <Button onClick={() => console.log('Open signup modal')}>
@@ -35,6 +41,15 @@ export default function HomePage() {
         </section>
       </main>
       <Footer />
+
+      {/* Signup Modal */}
+      <Modal
+        isOpen={isSignupOpen}
+        onClose={() => setIsSignupOpen(false)}
+        title="Create your account"
+      >
+        <SignupForm />
+      </Modal>
     </div>
   )
 }
