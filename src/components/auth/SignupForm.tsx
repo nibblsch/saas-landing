@@ -39,11 +39,19 @@ export function SignupForm() {
 
   // Handle social login
   const handleGoogleSignIn = async () => {
+    setIsLoading(true)
     try {
-      const { error } = await signInWithGoogle()
+      const { data, error } = await signInWithGoogle()
       if (error) throw error
+
+       // If successful, data.url will contain the authorization URL
+      if (data?.url) {
+      window.location.href = data.url
+    }
+
     } catch (err: any) {
       setError(err.message)
+      setIsLoading(false)
     }
   }
 
@@ -57,10 +65,13 @@ export function SignupForm() {
       
       {/* Social Login Buttons */}
     <div className="space-y-3">
-      <button className="w-full flex items-center justify-center gap-2 rounded-lg border border-gray-300 bg-white px-4 py-2.5 text-sm font-semibold text-gray-700 hover:bg-gray-50">
+      <button onClick={handleGoogleSignIn}
+        disabled={isLoading}
+        className="w-full flex items-center justify-center gap-2 rounded-lg border border-gray-300 bg-white px-4 py-2.5 text-sm font-semibold text-gray-700 hover:bg-gray-50 disabled:opacity-50"
+      >
         <FcGoogle className="h-5 w-5" />
-        Sign in with Google
-      </button>
+        {isLoading ? 'Connecting...' : 'Sign in with Google'}
+    </button>
       <button className="w-full flex items-center justify-center gap-2 rounded-lg border border-gray-300 bg-white px-4 py-2.5 text-sm font-semibold text-gray-700 hover:bg-gray-50">
         <FaApple className="h-5 w-5" />
         Sign in with Apple
