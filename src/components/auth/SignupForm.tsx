@@ -4,6 +4,7 @@ import { useState } from 'react'
 import { Button } from '../ui/Button'
 import { FcGoogle } from 'react-icons/fc'  // We'll need to install react-icons
 import { FaApple, FaTiktok } from 'react-icons/fa'
+import { signInWithEmail, signUpWithEmail, signInWithGoogle } from '@/lib/auth'
 
 // This will be expanded when we add actual authentication
 export function SignupForm() {
@@ -11,19 +12,50 @@ export function SignupForm() {
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [isLoading, setIsLoading] = useState(false)
+  const [mode, setMode] = useState<'signin' | 'signup'>('signin')
+  const [error, setError] = useState('')
 
-  // Form submission handler - we'll implement actual auth later
+  // Handle form submission
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     setIsLoading(true)
-    // TODO: Add actual authentication
-    console.log('Signup submitted:', { email, password })
-    setIsLoading(false)
+    setError('')
+
+    try {
+      const { error } = mode === 'signin' 
+        ? await signInWithEmail(email, password)
+        : await signUpWithEmail(email, password)
+
+      if (error) throw error
+
+      // Redirect or show success message
+      window.location.href = '/dashboard' // We'll create this route later
+    } catch (err: any) {
+      setError(err.message)
+    } finally {
+      setIsLoading(false)
+    }
+  }
+
+  // Handle social login
+  const handleGoogleSignIn = async () => {
+    try {
+      const { error } = await signInWithGoogle()
+      if (error) throw error
+    } catch (err: any) {
+      setError(err.message)
+    }
   }
 
   return (
     <div className="w-full">
-    {/* Social Login Buttons */}
+    {error && (
+        <div className="mb-4 p-3 text-sm text-red-500 bg-red-50 rounded-lg">
+          {error}
+        </div>
+      )}
+      
+      {/* Social Login Buttons */}
     <div className="space-y-3">
       <button className="w-full flex items-center justify-center gap-2 rounded-lg border border-gray-300 bg-white px-4 py-2.5 text-sm font-semibold text-gray-700 hover:bg-gray-50">
         <FcGoogle className="h-5 w-5" />
@@ -53,9 +85,9 @@ export function SignupForm() {
      <form onSubmit={handleSubmit} className="space-y-4">
       {/* Email field */}
       <div>
-        <label htmlFor="email" className="sr-only">
+        {/*<label htmlFor="email" className="sr-only">
           Email address
-        </label>
+        </label>*/}
         <input
           type="email"
           id="email"
@@ -69,9 +101,9 @@ export function SignupForm() {
 
       {/* Password field */}
       <div>
-        <label htmlFor="password" className="sr-only">
+        {/*<label htmlFor="password" className="sr-only">
           Password
-        </label>
+        </label>*/}
         <input
           type="password"
           id="password"
@@ -89,7 +121,7 @@ export function SignupForm() {
         className="w-full py-2.5" 
         disabled={isLoading}
       >
-        {isLoading ? 'Signing in...' : 'Sign In'}
+        {isLoading ? 'Please wait...' : mode === 'signin' ? 'Sign in' : 'Sign up'}
       </Button>
     </form>
   
@@ -101,10 +133,13 @@ export function SignupForm() {
       </div>
       <div className="mt-2 text-center text-sm">
         <span className="text-gray-600">
-          Don't have an account?{' '}
-          <a href="#" className="text-blue-600 hover:text-blue-700">
-            Sign up
-          </a>
+        {mode === 'signin' ? "Don't have an account? " : "Already have an account? "}
+          <button
+            onClick={() => setMode(mode === 'signin' ? 'signup' : 'signin')}
+            className="text-blue-600 hover:text-blue-700"
+          >
+            {mode === 'signin' ? 'Sign up' : 'Sign in'}
+          </button>
         </span>
       </div>
     </div>
