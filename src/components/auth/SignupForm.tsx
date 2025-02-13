@@ -1,41 +1,45 @@
+// REPLACE entire contents of src/components/auth/SignupForm.tsx with:
 'use client'
 
 import { useState } from 'react'
 import { Button } from '../ui/Button'
-import { FcGoogle } from 'react-icons/fc'  // We'll need to install react-icons
+import { FcGoogle } from 'react-icons/fc'
 import { FaApple, FaTiktok } from 'react-icons/fa'
-import { signInWithEmail, signUpWithEmail, signInWithGoogle } from '@/lib/auth'
 
-// This will be expanded when we add actual authentication
+interface SignupFormData {
+  email: string;
+  password: string;
+}
+
+interface UserProfileData {
+  name: string;
+  childAgeMonths?: number;
+}
+
+type SignupStep = 'initial' | 'profile'
+
 export function SignupForm() {
-  // Form state
-  const [email, setEmail] = useState('')
-  const [password, setPassword] = useState('')
+  // Changed default mode to 'signup'
+  const [mode, setMode] = useState<'signin' | 'signup'>('signup')
+  const [step, setStep] = useState<SignupStep>('initial')
   const [isLoading, setIsLoading] = useState(false)
-  const [mode, setMode] = useState<'signin' | 'signup'>('signin')
   const [error, setError] = useState('')
-  const [verificationSent, setVerificationSent] = useState(false)
-
-  // Handle form submission
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault()
-    setIsLoading(true)
-    setError('')
   
-    try {
-      if (mode === 'signup') {
-        // Sign up silently without verification
-        const { data, error } = await signUpWithEmail(email, password)
-        if (error) throw error
+  const [formData, setFormData] = useState<SignupFormData>({
+    email: '',
+    password: ''
+  })
+  
+  const [profileData, setProfileData] = useState<UserProfileData>({
+    name: '',
+    childAgeMonths: undefined
+  })
 
-        // Immediately redirect to pricing/plan selection
-        window.location.href = '/pricing'
-      } else {
-        // Sign in
-        const { error } = await signInWithEmail(email, password)
-        if (error) throw error
-        window.location.href = '/pricing'
-      }
+  const handleSocialLogin = async (provider: string) => {
+    setIsLoading(true)
+    try {
+      // Social login logic will go here
+      console.log(`${provider} login clicked`)
     } catch (err: any) {
       setError(err.message)
     } finally {
@@ -43,133 +47,182 @@ export function SignupForm() {
     }
   }
 
-
-  // Handle social login
-  const handleGoogleSignIn = async () => {
+  const handleInitialSubmit = async (e: React.FormEvent) => {
+    e.preventDefault()
     setIsLoading(true)
+    setError('')
+
     try {
-      const { data, error } = await signInWithGoogle()
-      if (error) throw error
-
-       // If successful, data.url will contain the authorization URL
-      if (data?.url) {
-      window.location.href = data.url
-    }
-
+      // Initial auth logic will go here
+      console.log('Initial auth:', formData)
+      // On success:
+      setStep('profile')
     } catch (err: any) {
       setError(err.message)
+    } finally {
       setIsLoading(false)
     }
   }
 
-  return (
-    <div className="w-full">
-    {error && (
-        <div className="mb-4 p-3 text-sm text-red-500 bg-red-50 rounded-lg">
-          {error}
-        </div>
-      )}
-      
-      {/* Social Login Buttons */}
-    <div className="space-y-3">
-      <button onClick={handleGoogleSignIn}
-        disabled={isLoading}
-        className="w-full flex items-center justify-center gap-2 rounded-lg border border-gray-300 bg-white px-4 py-2.5 text-sm font-semibold text-gray-700 hover:bg-gray-50 disabled:opacity-50"
-      >
-        <FcGoogle className="h-5 w-5" />
-        {isLoading ? 'Connecting...' : 'Sign in with Google'}
-    </button>
-      <button className="w-full flex items-center justify-center gap-2 rounded-lg border border-gray-300 bg-white px-4 py-2.5 text-sm font-semibold text-gray-700 hover:bg-gray-50">
-        <FaApple className="h-5 w-5" />
-        Sign in with Apple
-      </button>
-      <button className="w-full flex items-center justify-center gap-2 rounded-lg border border-gray-300 bg-white px-4 py-2.5 text-sm font-semibold text-gray-700 hover:bg-gray-50">
-        <FaTiktok className="h-5 w-5" />
-        Sign in with TikTok
-      </button>
-    </div>
+  const handleProfileSubmit = async (e: React.FormEvent) => {
+    e.preventDefault()
+    setIsLoading(true)
+    setError('')
 
-    {/* Divider */}
-    <div className="relative my-6">
-      <div className="absolute inset-0 flex items-center">
-        <div className="w-full border-t border-gray-300" />
-      </div>
-      <div className="relative flex justify-center text-sm">
-        <span className="bg-white px-2 text-gray-500">Or continue with</span>
-      </div>
-    </div>
+    try {
+      // Profile submission logic will go here
+      console.log('Profile data:', profileData)
+      // On success:
+      window.location.href = '/pricing'
+    } catch (err: any) {
+      setError(err.message)
+    } finally {
+      setIsLoading(false)
+    }
+  }
 
-     {/* Email/Password Form */}
-     <form onSubmit={handleSubmit} className="space-y-4">
-      {/* Email field */}
-      <div>
-        <label htmlFor="email" className="sr-only">
-          Email address
-        </label>
-        <input
-          type="email"
-          id="email"
-          placeholder="Email address"
-          value={email}
-          onChange={(e) => setEmail(e.target.value)}
-          className="block w-full rounded-lg border border-gray-300 px-3 py-2 text-gray-900 placeholder-gray-500 focus:border-blue-500 focus:ring-blue-500"
-          required
-        />
-      </div>
+  if (step === 'profile') {
+    return (
+      <div className="w-full">
+        <form onSubmit={handleProfileSubmit} className="space-y-4">
+          <div>
+            <label htmlFor="name" className="sr-only">Full Name</label>
+            <input
+              type="text"
+              id="name"
+              placeholder="Full Name"
+              value={profileData.name}
+              onChange={(e) => setProfileData(prev => ({ ...prev, name: e.target.value }))}
+              className="block w-full rounded-lg border border-gray-300 px-3 py-2"
+              required
+            />
+          </div>
 
-      {/* Password field */}
-      <div>
-        <label htmlFor="password" className="sr-only">
-          Password
-        </label>
-        <input
-          type="password"
-          id="password"
-          placeholder="Password"
-          value={password}
-          onChange={(e) => setPassword(e.target.value)}
-          className="block w-full rounded-lg border border-gray-300 px-3 py-2 text-gray-900 placeholder-gray-500 focus:border-blue-500 focus:ring-blue-500"
-          required
-        />
-      </div>
+          <div>
+            <label htmlFor="childAgeMonths" className="sr-only">Child's Age (months)</label>
+            <input
+              type="number"
+              id="childAgeMonths"
+              placeholder="Child's Age in Months (optional)"
+              value={profileData.childAgeMonths || ''}
+              onChange={(e) => setProfileData(prev => ({ 
+                ...prev, 
+                childAgeMonths: e.target.value ? parseInt(e.target.value) : undefined 
+              }))}
+              min="0"
+              max="60"
+              className="block w-full rounded-lg border border-gray-300 px-3 py-2"
+            />
+          </div>
 
-      {/* Submit button */}
-      <Button 
-        type="submit" 
-        className="w-full py-2.5" 
-        variant={mode === 'signin' ? 'primary' : 'success'}  // New prop for different colors
-        disabled={isLoading}
-      >
-        {isLoading ? 'Please wait...' : mode === 'signin' ? 'Sign in' : 'Sign up'}
-      </Button>
-
-      {verificationSent && (
-        <div className="mt-4 p-4 bg-blue-50 text-blue-700 rounded-lg">
-          <h4 className="font-semibold">Please verify your email</h4>
-          <p className="text-sm mt-1">
-            We've sent you an email with a verification link. Please check your inbox and click the link to continue.
-          </p>
-        </div>
-      )}
-    </form>
-  
-   {/* Footer Links */}
-   <div className="mt-4 text-center text-sm">
-        <a href="#" className="text-gray-600 hover:text-gray-900">
-          Forgot your password?
-        </a>
-      </div>
-      <div className="mt-2 text-center text-sm">
-        <span className="text-gray-600">
-        {mode === 'signin' ? "Don't have an account? " : "Already have an account? "}
-          <button
-            onClick={() => setMode(mode === 'signin' ? 'signup' : 'signin')}
-            className="text-blue-600 hover:text-blue-700"
+          <Button 
+            type="submit" 
+            className="w-full"
+            disabled={isLoading}
           >
-            {mode === 'signin' ? 'Sign up' : 'Sign in'}
-          </button>
-        </span>
+            {isLoading ? 'Please wait...' : 'Continue'}
+          </Button>
+        </form>
       </div>
-    </div>
+    )
+  }
+
+  return (
+    <>
+      <div className="w-full">
+        {error && (
+          <div className="mb-4 p-3 text-sm text-red-500 bg-red-50 rounded-lg">
+            {error}
+          </div>
+        )}
+
+        {/* Social Login Buttons */}
+        <div className="space-y-3">
+        <button
+          onClick={() => handleSocialLogin('google')}
+          className="w-full flex items-center justify-center gap-2 rounded-lg border border-gray-300 bg-white px-4 py-2.5 text-sm font-semibold text-gray-700 hover:bg-gray-50"
+        >
+          <FcGoogle className="h-5 w-5" />
+          Continue with Google
+        </button>
+        <button
+          onClick={() => handleSocialLogin('apple')}
+          className="w-full flex items-center justify-center gap-2 rounded-lg border border-gray-300 bg-white px-4 py-2.5 text-sm font-semibold text-gray-700 hover:bg-gray-50"
+        >
+          <FaApple className="h-5 w-5" />
+          Continue with Apple
+        </button>
+        <button
+          onClick={() => handleSocialLogin('tiktok')}
+          className="w-full flex items-center justify-center gap-2 rounded-lg border border-gray-300 bg-white px-4 py-2.5 text-sm font-semibold text-gray-700 hover:bg-gray-50"
+        >
+          <FaTiktok className="h-5 w-5" />
+          Continue with TikTok
+        </button>
+      </div>
+
+      {/* Divider */}
+      <div className="relative my-6">
+        <div className="absolute inset-0 flex items-center">
+          <div className="w-full border-t border-gray-300" />
+        </div>
+        <div className="relative flex justify-center text-sm">
+          <span className="bg-white px-2 text-gray-500">Or continue with email</span>
+        </div>
+      </div>
+
+
+
+        {/* Email/Password Form */}
+        <form onSubmit={handleInitialSubmit} className="space-y-4">
+        <div>
+          <label htmlFor="email" className="sr-only">Email address</label>
+          <input
+            type="email"
+            id="email"
+            placeholder="Email address"
+            value={formData.email}
+            onChange={(e) => setFormData(prev => ({ ...prev, email: e.target.value }))}
+            className="block w-full rounded-lg border border-gray-300 px-3 py-2"
+            required
+          />
+        </div>
+
+        <div>
+          <label htmlFor="password" className="sr-only">Password</label>
+          <input
+            type="password"
+            id="password"
+            placeholder="Password"
+            value={formData.password}
+            onChange={(e) => setFormData(prev => ({ ...prev, password: e.target.value }))}
+            className="block w-full rounded-lg border border-gray-300 px-3 py-2"
+            required
+          />
+        </div>
+
+        <Button 
+          type="submit" 
+          className="w-full"
+          variant={mode === 'signin' ? 'primary' : 'success'}
+          disabled={isLoading}
+        >
+          {isLoading ? 'Please wait...' : mode === 'signin' ? 'Sign in' : 'Create Account'}
+        </Button>
+      </form>
+
+        <div className="mt-4 text-center text-sm">
+          <span className="text-gray-600">
+            {mode === 'signin' ? "Don't have an account? " : "Already have an account? "}
+            <button
+              onClick={() => setMode(mode === 'signin' ? 'signup' : 'signin')}
+              className="text-blue-600 hover:text-blue-700"
+            >
+              {mode === 'signin' ? 'Sign up' : 'Sign in'}
+            </button>
+          </span>
+        </div>
+      </div>
+    </>
   )
 }

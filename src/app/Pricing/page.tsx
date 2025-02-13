@@ -5,6 +5,16 @@ import { useState } from 'react'
 import { useAuth } from '@/context/AuthContext'
 import { Button } from '@/components/ui/Button'
 import { loadStripe } from '@stripe/stripe-js'
+import { CheckIcon } from 'lucide-react'
+
+export default function PricingPage() {
+  const searchParams = useSearchParams()
+  const selectedPlan = searchParams.get('plan')
+
+  // Set initial billing interval based on selected plan
+  const [billingInterval, setBillingInterval] = useState<BillingInterval>(
+    selectedPlan === PRICING_PLANS.annually.id ? 'annually' : 'monthly'
+  )
 
 // Define pricing plan types
 type BillingInterval = 'monthly' | 'annually'
@@ -139,6 +149,14 @@ export default function PricingPage() {
           </ul>
         </div>
       </div>
-    </div>
+      <Modal
+        isOpen={isSignupOpen}
+        onClose={() => setIsSignupOpen(false)}
+        title="Create your account"
+      >
+        <SignupForm />
+      </Modal>
+    </div>  
   )
+}
 }
