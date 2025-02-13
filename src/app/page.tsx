@@ -1,32 +1,40 @@
-// Reusable button component with consistent styling
-type ButtonProps = {
-  children: React.ReactNode
-  variant?: 'primary' | 'secondary'
-  onClick?: () => void
-  className?: string
-}
+'use client' // Add this since we're using onClick
 
-export function Button({ 
-  children, 
-  variant = 'primary', 
-  onClick, 
-  className = '' 
-}: ButtonProps) {
-  // Base styles all buttons share
-  const baseStyles = "px-4 py-2 rounded-lg font-medium"
-  
-  // Variant-specific styles
-  const variantStyles = {
-    primary: "bg-blue-600 text-white hover:bg-blue-700",
-    secondary: "bg-gray-200 text-gray-900 hover:bg-gray-300"
-  }
+import { Button } from '@/components/ui/Button'
+import Header from '@/components/layout/Header'
+import Footer from '@/components/layout/Footer'
 
+export default function HomePage() {
   return (
-    <button 
-      onClick={onClick}
-      className={`${baseStyles} ${variantStyles[variant]} ${className}`}
-    >
-      {children}
-    </button>
+    <div className="min-h-screen flex flex-col">
+      <Header />
+      <main className="flex-grow">
+        {/* Hero Section */}
+        <section className="px-4 py-20 text-center">
+          <h1 className="text-4xl font-bold tracking-tight sm:text-6xl">
+            BabyGPT
+          </h1>
+          <p className="mt-6 text-lg text-gray-600 max-w-3xl mx-auto">
+          Your Personal AI-Powered Parenting Expert
+          </p>
+          <div className="mt-10">
+            <Button onClick={() => console.log('Open signup modal')}>
+              Get Started Now
+            </Button>
+          </div>
+        </section>
+
+        {/* Features Section */}
+        <section id="features" className="py-20 bg-gray-50">
+          {/* Features content will go here */}
+        </section>
+
+        {/* Pricing Section */}
+        <section id="pricing" className="py-20">
+          {/* Pricing content will go here */}
+        </section>
+      </main>
+      <Footer />
+    </div>
   )
 }

@@ -1,6 +1,7 @@
-// This is our navigation header that appears on all pages
+'use client' // Add this since we're using onClick
+
 import Link from 'next/link'
-import { Button } from '../ui/Button'  // We'll create this next
+import { Button } from '../ui/Button'
 
 export default function Header() {
   return (
@@ -20,7 +21,7 @@ export default function Header() {
             Pricing
           </Link>
           <Button onClick={() => console.log('Open signup modal')}>
-            Get Started
+            Get Started Now
           </Button>
         </div>
       </nav>
