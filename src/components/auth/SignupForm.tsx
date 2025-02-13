@@ -85,9 +85,9 @@ export function SignupForm() {
      <form onSubmit={handleSubmit} className="space-y-4">
       {/* Email field */}
       <div>
-        {/*<label htmlFor="email" className="sr-only">
+        <label htmlFor="email" className="sr-only">
           Email address
-        </label>*/}
+        </label>
         <input
           type="email"
           id="email"
@@ -101,9 +101,9 @@ export function SignupForm() {
 
       {/* Password field */}
       <div>
-        {/*<label htmlFor="password" className="sr-only">
+        <label htmlFor="password" className="sr-only">
           Password
-        </label>*/}
+        </label>
         <input
           type="password"
           id="password"
@@ -119,6 +119,7 @@ export function SignupForm() {
       <Button 
         type="submit" 
         className="w-full py-2.5" 
+        variant={mode === 'signin' ? 'primary' : 'success'}  // New prop for different colors
         disabled={isLoading}
       >
         {isLoading ? 'Please wait...' : mode === 'signin' ? 'Sign in' : 'Sign up'}
