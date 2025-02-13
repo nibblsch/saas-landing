@@ -8,7 +8,7 @@ import Header from '@/components/layout/Header'
 import Footer from '@/components/layout/Footer'
 import { CheckIcon } from 'lucide-react'
 import { setPlanSelection } from '@/store/planSelection'
-import { useSearchParams } from 'next/navigation'
+import { useSearchParams, useRouter } from 'next/navigation'
 
 
 const PRICING_PLANS = {
@@ -41,29 +41,40 @@ const PRICING_PLANS = {
 
 export default function HomePage() {
   const searchParams = useSearchParams()
+  const router = useRouter()
   const [isSignupOpen, setIsSignupOpen] = useState(false)
   const [currentStep, setCurrentStep] = useState<'initial' | 'details' | 'payment'>(
     searchParams.get('step') === 'details' ? 'details' : 'initial'
   )
   const handleOpenSignup = () => setIsSignupOpen(true)
 
-  // Add useEffect to handle URL parameters
+  // First useEffect for handling OAuth
   useEffect(() => {
+    const hashParams = new URLSearchParams(window.location.hash.substring(1))
+    const accessToken = hashParams.get('access_token')
     const error = searchParams.get('error')
     const errorMessage = searchParams.get('message')
     
+    if (accessToken) {
+      console.log('Google OAuth Token:', accessToken)
+      localStorage.setItem('googleAccessToken', accessToken)
+      router.replace('/?step=details')
+    }
+
     if (error === 'auth') {
       console.error('Auth error:', errorMessage)
       // Show error to user (you can add a toast or alert here)
     }
-    
+  }, [router, searchParams])
+
+  // Second useEffect for handling step changes
+  useEffect(() => {
     if (searchParams.get('step') === 'details') {
       setIsSignupOpen(true)
       setCurrentStep('details')
     }
   }, [searchParams])
 
-    
   return (
     <>
       <div className="min-h-screen flex flex-col">

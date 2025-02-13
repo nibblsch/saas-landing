@@ -1,13 +1,14 @@
 import { createRouteHandlerClient } from '@supabase/auth-helpers-nextjs'
 import { cookies } from 'next/headers'
-import { NextResponse } from 'next/server'
+import { NextRequest, NextResponse } from 'next/server'
 
-export async function GET(request: Request) {
+export async function GET(req: NextRequest) {
   try {
     console.log('Callback route hit')
-    const requestUrl = new URL(request.url)
+    const url = new URL(req.url)
     console.log('Full URL:', request.url)
     console.log('Hash:', requestUrl.hash)
+    const accessToken = url.searchParams.get('access_token')
     
     const cookieStore = cookies()
     const supabase = createRouteHandlerClient({ cookies: () => cookieStore })
@@ -21,6 +22,11 @@ export async function GET(request: Request) {
 
       if (accessToken) {
         console.log('Access token found in hash')
+        return NextResponse.redirect('/?error=auth&message=No access token received')
+  }
+        // Store token in session or DB if needed
+        console.log('Google OAuth Token:', accessToken)
+        
         const { data, error } = await supabase.auth.setSession({
           access_token: accessToken,
           refresh_token: refreshToken || ''
@@ -119,9 +125,9 @@ export async function GET(request: Request) {
     }))
 
     // Redirect to main page with modal in details step
-    return NextResponse.redirect(new URL('/?step=details', requestUrl.origin))
-
-  } catch (error) {
+    return NextResponse.redirect('/?step=details')
+}
+ catch (error) {
     console.error('Auth callback error:', error)
     // Redirect to home with error
     return NextResponse.redirect(new URL('/?error=auth', request.url))

@@ -14,6 +14,9 @@ export async function middleware(request: NextRequest) {
     console.log('Session status:', session ? 'Active' : 'None')
     if (error) console.error('Session error:', error)
 
+    // Refresh session if expired
+    await supabase.auth.getSession()
+
     return response
   } catch (error) {
     console.error('Middleware error:', error)
@@ -21,15 +24,13 @@ export async function middleware(request: NextRequest) {
   }
 }
 
-// ADD: Configure which routes this middleware runs on
+// Configure which routes this middleware runs on
 export const config = {
   matcher: [
     '/((?!api|_next/static|_next/image|favicon.ico).*)',
   ],
 }
 
-  // Refresh session if expired
-  await supabase.auth.getSession()
 
-  return response
-}
+
+

@@ -10,7 +10,7 @@ const nextConfig: NextConfig = {
     return [
       {
         source: "/auth/callback",
-        destination: "/",
+        destination: "/?step=details", // Ensure it goes back to the signup modal
         permanent: false,
       },
     ];
