@@ -15,10 +15,16 @@ type ModalProps = {
 export function Modal({ isOpen, onClose, title, children }: ModalProps) {
   return (
     // Transition and Dialog from HeadlessUI handle accessibility and animations
-    <Transition.Root show={isOpen} as={Fragment}>
-      <Dialog as="div" className="relative z-50" onClose={onClose}>
+    <Transition show={isOpen} as={Fragment}>
+      <Dialog 
+        as="div" 
+        className="relative z-50" 
+        onClose={onClose}
+        open={isOpen}
+      >
         {/* Dark overlay behind modal */}
-        <Transition.Child
+        <Transition
+          show={isOpen}
           as={Fragment}
           enter="ease-out duration-300"
           enterFrom="opacity-0"
@@ -27,13 +33,14 @@ export function Modal({ isOpen, onClose, title, children }: ModalProps) {
           leaveFrom="opacity-100"
           leaveTo="opacity-0"
         >
-          <div className="fixed inset-0 bg-gray-500 bg-opacity-75" />
-        </Transition.Child>
+          <div className="fixed inset-0 bg-gray-500 bg-opacity-75 transition-opacity" />
+        </Transition>
 
         {/* Modal panel */}
         <div className="fixed inset-0 z-10 overflow-y-auto">
           <div className="flex min-h-full items-end justify-center p-4 text-center sm:items-center sm:p-0">
-            <Transition.Child
+            <Transition
+              show={isOpen}
               as={Fragment}
               enter="ease-out duration-300"
               enterFrom="opacity-0 translate-y-4 sm:translate-y-0 sm:scale-95"
@@ -42,15 +49,16 @@ export function Modal({ isOpen, onClose, title, children }: ModalProps) {
               leaveFrom="opacity-100 translate-y-0 sm:scale-100"
               leaveTo="opacity-0 translate-y-4 sm:translate-y-0 sm:scale-95"
             >
-              <Dialog.Panel className="relative transform rounded-lg bg-white px-4 pb-4 pt-5 text-left shadow-xl transition-all sm:my-8 sm:w-full sm:max-w-lg sm:p-6">
+              <div className="w-full max-w-md transform overflow-hidden rounded-lg bg-white p-6 text-left align-middle shadow-xl transition-all">
                 {/* Close button */}
-                <div className="absolute right-0 top-0 pr-4 pt-4">
+                <div className="absolute right-4 top-4">
                   <button
                     type="button"
                     className="rounded-md bg-white text-gray-400 hover:text-gray-500"
                     onClick={onClose}
                   >
-                    <X className="h-6 w-6" />
+                    <span className="sr-only">Close</span>
+                    <X className="h-6 w-6" aria-hidden="true" />
                   </button>
                 </div>
 
@@ -63,14 +71,12 @@ export function Modal({ isOpen, onClose, title, children }: ModalProps) {
                 </Dialog.Title>
 
                 {/* Content */}
-                <div className="mt-3">
-                  {children}
-                </div>
-              </Dialog.Panel>
-            </Transition.Child>
+                {children}
+              </div>
+            </Transition>
           </div>
         </div>
       </Dialog>
-    </Transition.Root>
+    </Transition>
   )
 }
