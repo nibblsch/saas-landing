@@ -5,7 +5,8 @@ import { useState } from 'react'
 import { Button } from '../ui/Button'
 import { FcGoogle } from 'react-icons/fc'
 import { FaApple, FaTiktok } from 'react-icons/fa'
-
+// ADD back the Google auth function
+import { signInWithGoogle } from '@/lib/auth'
 interface SignupFormData {
   email: string;
   password: string;
@@ -16,7 +17,15 @@ interface UserProfileData {
   childAgeMonths?: number;
 }
 
-type SignupStep = 'initial' | 'profile'
+type SignupStep = 'initial' | 'details' | 'checkout'  // Added checkout step
+
+// ADD interface for selected plan
+interface SelectedPlan {
+  id: string;
+  name: string;
+  price: number;
+  interval: 'monthly' | 'annually';
+}
 
 export function SignupForm() {
   // Changed default mode to 'signup'
@@ -24,6 +33,7 @@ export function SignupForm() {
   const [step, setStep] = useState<SignupStep>('initial')
   const [isLoading, setIsLoading] = useState(false)
   const [error, setError] = useState('')
+  const [selectedPlan, setSelectedPlan] = useState<SelectedPlan | null>(null)
   
   const [formData, setFormData] = useState<SignupFormData>({
     email: '',
@@ -40,6 +50,22 @@ export function SignupForm() {
     try {
       // Social login logic will go here
       console.log(`${provider} login clicked`)
+    } catch (err: any) {
+      setError(err.message)
+    } finally {
+      setIsLoading(false)
+    }
+  }
+
+  // RESTORE Google sign-in handler
+  const handleGoogleSignIn = async () => {
+    setIsLoading(true)
+    try {
+      const { data, error } = await signInWithGoogle()
+      if (error) throw error
+      if (data?.url) {
+        window.location.href = data.url
+      }
     } catch (err: any) {
       setError(err.message)
     } finally {
@@ -127,6 +153,96 @@ export function SignupForm() {
     )
   }
 
+   // UPDATE the details step to include simplified pricing
+   if (step === 'details') {
+    return (
+      <div className="w-full">
+        {/* Profile form */}
+        <form onSubmit={handleProfileSubmit} className="space-y-6">
+          {/* Name and age inputs */}
+          <div className="space-y-4">
+            <input
+              type="text"
+              placeholder="Full Name"
+              value={profileData.name}
+              onChange={(e) => setProfileData(prev => ({ ...prev, name: e.target.value }))}
+              className="block w-full rounded-lg border border-gray-300 px-3 py-2"
+              required
+            />
+
+            <input
+              type="number"
+              placeholder="Child's Age in Months (optional)"
+              value={profileData.childAgeMonths || ''}
+              onChange={(e) => setProfileData(prev => ({ 
+                ...prev, 
+                childAgeMonths: e.target.value ? parseInt(e.target.value) : undefined 
+              }))}
+              className="block w-full rounded-lg border border-gray-300 px-3 py-2"
+            />
+          </div>
+
+          {/* Simplified pricing selection */}
+          <div className="border-t border-gray-200 pt-6">
+            <h4 className="text-center text-sm font-medium text-gray-700 mb-4">
+              Select your plan
+            </h4>
+            <div className="space-y-3">
+              <button
+                type="button"
+                onClick={() => setSelectedPlan({
+                  id: 'prod_RkcmFAgddLLJfn',
+                  name: 'Monthly',
+                  price: 29.99,
+                  interval: 'monthly'
+                })}
+                className={`w-full flex items-center justify-between p-3 rounded-lg border ${
+                  selectedPlan?.interval === 'monthly' 
+                    ? 'border-blue-500 bg-blue-50' 
+                    : 'border-gray-300'
+                }`}
+              >
+                <span>Monthly</span>
+                <span className="font-semibold">$29.99/mo</span>
+              </button>
+
+              <button
+                type="button"
+                onClick={() => setSelectedPlan({
+                  id: 'prod_RkcnX78pXVNKpu',
+                  name: 'Annual',
+                  price: 23.99,
+                  interval: 'annually'
+                })}
+                className={`w-full flex items-center justify-between p-3 rounded-lg border ${
+                  selectedPlan?.interval === 'annually' 
+                    ? 'border-blue-500 bg-blue-50' 
+                    : 'border-gray-300'
+                }`}
+              >
+                <div>
+                  <span>Annual</span>
+                  <span className="ml-2 text-sm text-green-600">Save 20%</span>
+                </div>
+                <span className="font-semibold">$23.99/mo</span>
+              </button>
+            </div>
+          </div>
+
+          {/* Continue button */}
+          <Button 
+            type="submit" 
+            className="w-full"
+            disabled={isLoading || !selectedPlan}
+          >
+            {isLoading ? 'Please wait...' : 'Continue to Payment'}
+          </Button>
+        </form>
+      </div>
+    )
+  }
+
+  // the social login buttons section - top is error display
   return (
     <>
       <div className="w-full">
@@ -139,7 +255,7 @@ export function SignupForm() {
         {/* Social Login Buttons */}
         <div className="space-y-3">
         <button
-          onClick={() => handleSocialLogin('google')}
+          onClick={handleGoogleSignIn}  // RESTORED Google sign-in handler
           className="w-full flex items-center justify-center gap-2 rounded-lg border border-gray-300 bg-white px-4 py-2.5 text-sm font-semibold text-gray-700 hover:bg-gray-50"
         >
           <FcGoogle className="h-5 w-5" />

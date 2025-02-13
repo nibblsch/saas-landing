@@ -1,7 +1,6 @@
-// REPLACE entire contents of src/app/page.tsx with:
 'use client'
 
-import { useState } from 'react'
+import React, { useState, useEffect } from 'react'
 import { Button } from '@/components/ui/Button'
 import { Modal } from '@/components/ui/Modal'
 import { SignupForm } from '@/components/auth/SignupForm'
@@ -9,6 +8,8 @@ import Header from '@/components/layout/Header'
 import Footer from '@/components/layout/Footer'
 import { CheckIcon } from 'lucide-react'
 import { setPlanSelection } from '@/store/planSelection'
+import { useSearchParams } from 'next/navigation'
+
 
 const PRICING_PLANS = {
   monthly: {
@@ -39,9 +40,30 @@ const PRICING_PLANS = {
 }
 
 export default function HomePage() {
+  const searchParams = useSearchParams()
   const [isSignupOpen, setIsSignupOpen] = useState(false)
+  const [currentStep, setCurrentStep] = useState<'initial' | 'details' | 'payment'>(
+    searchParams.get('step') === 'details' ? 'details' : 'initial'
+  )
   const handleOpenSignup = () => setIsSignupOpen(true)
 
+  // Add useEffect to handle URL parameters
+  useEffect(() => {
+    const error = searchParams.get('error')
+    const errorMessage = searchParams.get('message')
+    
+    if (error === 'auth') {
+      console.error('Auth error:', errorMessage)
+      // Show error to user (you can add a toast or alert here)
+    }
+    
+    if (searchParams.get('step') === 'details') {
+      setIsSignupOpen(true)
+      setCurrentStep('details')
+    }
+  }, [searchParams])
+
+    
   return (
     <>
       <div className="min-h-screen flex flex-col">

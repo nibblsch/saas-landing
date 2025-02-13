@@ -65,8 +65,8 @@ export function Modal({ isOpen, onClose, title, children }: ModalProps) {
                 {/* Title */}
                 <Dialog.Title 
                   as="h3" 
-                  className="text-lg font-semibold leading-6 text-gray-900"
-                >
+                  className="text-lg font-semibold text-center mb-8"  // CHANGE: add mb-8 instead of mb-4
+                  >
                   {title}
                 </Dialog.Title>
 
