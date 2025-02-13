@@ -14,28 +14,35 @@ export function SignupForm() {
   const [isLoading, setIsLoading] = useState(false)
   const [mode, setMode] = useState<'signin' | 'signup'>('signin')
   const [error, setError] = useState('')
+  const [verificationSent, setVerificationSent] = useState(false)
 
   // Handle form submission
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     setIsLoading(true)
     setError('')
-
+  
     try {
-      const { error } = mode === 'signin' 
-        ? await signInWithEmail(email, password)
-        : await signUpWithEmail(email, password)
+      if (mode === 'signup') {
+        // Sign up silently without verification
+        const { data, error } = await signUpWithEmail(email, password)
+        if (error) throw error
 
-      if (error) throw error
-
-      // Redirect or show success message
-      window.location.href = '/dashboard' // We'll create this route later
+        // Immediately redirect to pricing/plan selection
+        window.location.href = '/pricing'
+      } else {
+        // Sign in
+        const { error } = await signInWithEmail(email, password)
+        if (error) throw error
+        window.location.href = '/pricing'
+      }
     } catch (err: any) {
       setError(err.message)
     } finally {
       setIsLoading(false)
     }
   }
+
 
   // Handle social login
   const handleGoogleSignIn = async () => {
@@ -135,6 +142,15 @@ export function SignupForm() {
       >
         {isLoading ? 'Please wait...' : mode === 'signin' ? 'Sign in' : 'Sign up'}
       </Button>
+
+      {verificationSent && (
+        <div className="mt-4 p-4 bg-blue-50 text-blue-700 rounded-lg">
+          <h4 className="font-semibold">Please verify your email</h4>
+          <p className="text-sm mt-1">
+            We've sent you an email with a verification link. Please check your inbox and click the link to continue.
+          </p>
+        </div>
+      )}
     </form>
   
    {/* Footer Links */}
