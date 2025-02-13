@@ -1,7 +1,7 @@
 // REPLACE entire contents of src/components/auth/SignupForm.tsx with:
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { Button } from '../ui/Button'
 import { FcGoogle } from 'react-icons/fc'
 import { FaApple, FaTiktok } from 'react-icons/fa'
@@ -27,10 +27,17 @@ interface SelectedPlan {
   interval: 'monthly' | 'annually';
 }
 
-export function SignupForm() {
-  // Changed default mode to 'signup'
+interface SignupFormProps {
+  initialStep?: SignupStep;
+  initialProfile?: {
+    name?: string;
+    email?: string;
+  } | null;
+}
+
+export function SignupForm({ initialStep = 'initial', initialProfile = null }: SignupFormProps) {
   const [mode, setMode] = useState<'signin' | 'signup'>('signup')
-  const [step, setStep] = useState<SignupStep>('initial')
+  const [step, setStep] = useState<SignupStep>(initialStep)
   const [isLoading, setIsLoading] = useState(false)
   const [error, setError] = useState('')
   const [selectedPlan, setSelectedPlan] = useState<SelectedPlan | null>(null)
@@ -41,9 +48,28 @@ export function SignupForm() {
   })
   
   const [profileData, setProfileData] = useState<UserProfileData>({
-    name: '',
+    name: initialProfile?.name || '',
     childAgeMonths: undefined
   })
+
+  // Update useEffect to handle initialProfile changes
+  useEffect(() => {
+    console.log('Initial profile received:', initialProfile)
+    if (initialProfile?.name) {
+      setProfileData(prev => {
+        // Only update if the name is different
+        if (prev.name !== initialProfile.name) {
+          const newData = {
+            ...prev,
+            name: initialProfile.name
+          }
+          console.log('Updated profile data:', newData)
+          return newData
+        }
+        return prev
+      })
+    }
+  }, [initialProfile?.name]) // Only run when the name changes
 
   const handleSocialLogin = async (provider: string) => {
     setIsLoading(true)

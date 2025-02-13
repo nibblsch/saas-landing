@@ -4,16 +4,9 @@ const nextConfig: NextConfig = {
   reactStrictMode: true,
   /* config options here */
   experimental: {
-    serverActions: true,
-  },
-  async redirects() {
-    return [
-      {
-        source: "/auth/callback",
-        destination: "/?step=details", // Ensure it goes back to the signup modal
-        permanent: false,
-      },
-    ];
+    serverActions: {
+      allowedOrigins: ['localhost:3000'], // Add your domains here
+    },
   },
 };
 

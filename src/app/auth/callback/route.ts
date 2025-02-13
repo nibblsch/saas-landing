@@ -4,14 +4,14 @@ import { NextRequest, NextResponse } from 'next/server'
 
 export async function GET(req: NextRequest) {
   try {
-    const url = new URL(req.url)
-    const code = url.searchParams.get('code')
-    const accessToken = url.searchParams.get('access_token')
+    const requestUrl = new URL(req.url)
+    const code = requestUrl.searchParams.get('code')
     
-    // If we have an access_token in the URL, redirect to home to handle it client-side
-    if (accessToken || url.hash.includes('access_token')) {
-      const redirectUrl = new URL('/', req.url)
-      redirectUrl.hash = url.hash
+    // If we have an access_token in the hash, redirect to home to handle it client-side
+    if (requestUrl.hash && requestUrl.hash.includes('access_token')) {
+      // Preserve the hash when redirecting
+      const redirectUrl = new URL('/', requestUrl)
+      redirectUrl.hash = requestUrl.hash
       return NextResponse.redirect(redirectUrl)
     }
 
@@ -28,7 +28,8 @@ export async function GET(req: NextRequest) {
           email: session.user.email
         }
 
-        const response = NextResponse.redirect(new URL('/?step=details', req.url))
+        // Create response with redirect
+        const response = NextResponse.redirect(new URL('/?step=details', requestUrl))
         
         // Set cookie with more permissive settings
         response.headers.set(
@@ -40,11 +41,13 @@ export async function GET(req: NextRequest) {
       }
     }
 
-    return NextResponse.redirect(new URL('/?error=auth&message=Invalid authentication response', req.url))
+    return NextResponse.redirect(new URL('/?error=auth&message=Invalid authentication response', requestUrl))
   } catch (error) {
     console.error('Callback error:', error)
+    // Type guard for Error object
+    const errorMessage = error instanceof Error ? error.message : 'Unknown error occurred'
     return NextResponse.redirect(
-      new URL('/?error=auth&message=' + encodeURIComponent(error.message), req.url)
+      new URL('/?error=auth&message=' + encodeURIComponent(errorMessage), req.url)
     )
   }
-}
+} 

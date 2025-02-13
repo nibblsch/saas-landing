@@ -9,6 +9,7 @@ import Footer from '@/components/layout/Footer'
 import { CheckIcon } from 'lucide-react'
 import { setPlanSelection } from '@/store/planSelection'
 import { useSearchParams, useRouter } from 'next/navigation'
+import supabase from '@/lib/supabase'
 
 
 const PRICING_PLANS = {
@@ -46,32 +47,94 @@ export default function HomePage() {
   const [currentStep, setCurrentStep] = useState<'initial' | 'details' | 'payment'>(
     searchParams.get('step') === 'details' ? 'details' : 'initial'
   )
+
+  // Add state for user profile
+  const [userProfile, setUserProfile] = useState<{name?: string, email?: string} | null>(null)
+
   const handleOpenSignup = () => setIsSignupOpen(true)
 
   // First useEffect for handling OAuth
   useEffect(() => {
-    const hashParams = new URLSearchParams(window.location.hash.substring(1))
-    const accessToken = hashParams.get('access_token')
-    const error = searchParams.get('error')
-    const errorMessage = searchParams.get('message')
-    
-    if (accessToken) {
-      console.log('Google OAuth Token:', accessToken)
-      localStorage.setItem('googleAccessToken', accessToken)
-      router.replace('/?step=details')
+    const handleAuth = async () => {
+      try {
+        const hashParams = new URLSearchParams(window.location.hash.substring(1))
+        const accessToken = hashParams.get('access_token')
+        
+        // Only check for error if we don't have an access token
+        if (!accessToken) {
+          const error = searchParams.get('error')
+          const errorMessage = searchParams.get('message')
+          if (error) {
+            console.error('Auth error:', errorMessage)
+            // Show error to user (you can add a toast or alert here)
+            return // Exit early if there's an error
+          }
+        }
+        
+        if (accessToken) {
+          console.log('Access token found')
+          
+          // Use the singleton instance
+          const { data: { session }, error: sessionError } = await supabase.auth.setSession({
+            access_token: accessToken,
+            refresh_token: hashParams.get('refresh_token') || ''
+          })
+          
+          if (sessionError) throw sessionError
+          
+          if (session?.user?.user_metadata) {
+            const profileData = {
+              name: session.user.user_metadata.full_name || session.user.user_metadata.name || '',
+              email: session.user.email
+            }
+            
+            setUserProfile(profileData)
+            
+            // Set cookie with more permissive SameSite
+            document.cookie = `user_profile=${encodeURIComponent(JSON.stringify(profileData))}; path=/; max-age=3600; SameSite=Lax`
+            
+            window.history.replaceState({}, document.title, window.location.pathname + '?step=details')
+            setIsSignupOpen(true)
+            setCurrentStep('details')
+          }
+        }
+      } catch (err) {
+        console.error('Error handling auth:', err)
+      }
     }
 
-    if (error === 'auth') {
-      console.error('Auth error:', errorMessage)
-      // Show error to user (you can add a toast or alert here)
+    // Only run handleAuth if we have a hash or error params
+    if (window.location.hash || searchParams.get('error')) {
+      handleAuth()
     }
-  }, [router, searchParams])
+  }, [searchParams])
 
   // Second useEffect for handling step changes
   useEffect(() => {
-    if (searchParams.get('step') === 'details') {
-      setIsSignupOpen(true)
-      setCurrentStep('details')
+    try {
+      // Check for user profile cookie when component mounts
+      const cookies = document.cookie.split(';').reduce((acc, cookie) => {
+        const [key, value] = cookie.trim().split('=')
+        acc[key] = value
+        return acc
+      }, {} as { [key: string]: string })
+
+      const profileCookie = cookies['user_profile']
+      console.log('Found profile cookie:', profileCookie)
+      
+      if (profileCookie) {
+        const profile = JSON.parse(decodeURIComponent(profileCookie))
+        console.log('Parsed profile:', profile)
+        setUserProfile(profile)
+      }
+
+      // Handle step parameter
+      if (searchParams.get('step') === 'details') {
+        setIsSignupOpen(true)
+        setCurrentStep('details')
+      }
+    } catch (error) {
+      console.error('Error parsing profile cookie:', error)
     }
   }, [searchParams])
 
@@ -200,7 +263,10 @@ export default function HomePage() {
           onClose={() => setIsSignupOpen(false)}
           title="Create your account"
         >
-          <SignupForm />
+          <SignupForm 
+            initialStep={currentStep}
+            initialProfile={userProfile}
+          />
         </Modal>
       </div>
     </>
