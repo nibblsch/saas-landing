@@ -57,32 +57,6 @@ export function SignupForm({
     childAgeMonths: undefined
   })
 
-  // Add useEffect to handle initialPlan changes
-  useEffect(() => {
-       if (initialPlan) {
-         setSelectedPlan(initialPlan)
-       }
-     }, [initialPlan])
-
-  // Update useEffect to handle initialProfile changes
-  useEffect(() => {
-    console.log('Initial profile received:', initialProfile)
-    if (initialProfile?.name) {
-      setProfileData(prev => {
-        // Only update if the name is different
-        if (prev.name !== initialProfile.name) {
-          const newData = {
-            ...prev,
-            name: initialProfile.name
-          }
-          console.log('Updated profile data:', newData)
-          return newData
-        }
-        return prev
-      })
-    }
-  }, [initialProfile?.name]) // Only run when the name changes
-
   const handleSocialLogin = async (provider: string) => {
     setIsLoading(true)
     try {
@@ -142,57 +116,47 @@ export function SignupForm({
       setError(err.message)
     } finally {
       setIsLoading(false)
+
+  //This ensures that whenever initialPlan changes (when the user clicks a pricing button), selectedPlan updates accordingly.
+  useEffect(() => {
+    console.log('Received initialPlan:', initialPlan);
+    if (initialPlan) {
+      setSelectedPlan(initialPlan);
+      console.log('Updating selected plan in state:', initialPlan);
+      }
+    }, [initialPlan]);
+
+    console.log('Current selected plan in UI:', selectedPlan); // 🟢 Added console log to track UI update
+
+  // Update useEffect to handle initialProfile changes
+  useEffect(() => {
+    console.log('Initial profile received:', initialProfile)
+    if (initialProfile?.name) {
+      setProfileData(prev => {
+        // Only update if the name is different
+        if (prev.name !== initialProfile.name) {
+          const newData = {
+            ...prev,
+            name: initialProfile.name
+          }
+          console.log('Updated profile data:', newData)
+          return newData
+        }
+        return prev
+      })
+    }
+  }, [initialProfile?.name]) // Only run when the name changes
+
+  //Store Selected Price Plan Before Email Signup
+  useEffect(() => {
+    if (selectedPlan) {
+      console.log('Saving selected plan for manual signup:', selectedPlan);
+      sessionStorage.setItem('selectedPlan', JSON.stringify(selectedPlan));
+    }
+  }, [selectedPlan]);
     }
   }
-    {/* OLD CODE
-    if (step === 'profile' || step === 'details') {
-        return (
-          <div className="w-full">
-            <form onSubmit={handleProfileSubmit} className="space-y-6">
-
-            
-              {/* Profile inputs */}
-              {/* OLD CODE
-                <div className="space-y-4">
-                <input
-                  type="text"
-                  placeholder="Full Name"
-                  value={profileData.name}
-                  onChange={(e) => setProfileData(prev => ({ ...prev, name: e.target.value }))}
-                  className="block w-full rounded-lg border border-gray-300 px-3 py-2"
-                  required
-                />
-                <input
-                  type="number"
-                  placeholder="Child's Age in Months (optional)"
-                  value={profileData.childAgeMonths || ''}
-                  onChange={(e) => setProfileData(prev => ({ 
-                    ...prev, 
-                    childAgeMonths: e.target.value ? parseInt(e.target.value) : undefined 
-                  }))}
-                  className="block w-full rounded-lg border border-gray-300 px-3 py-2"
-                />
-              </div>
-              
-              {/* Always show pricing selection */}
-              {/* OLD CODE
-                <div className="border-t border-gray-200 pt-6">
-
-          <Button 
-            type="submit" 
-            className="w-full"
-            disabled={isLoading}
-          >
-            {isLoading ? 'Please wait...' : 'Continue'}
-          </Button>
-          </div>
-        </form>
-      </div>
-    )
-  }
-  */}
-
-  
+    
    // UPDATE the details step to include simplified pricing
    if (step === 'profile' || step === 'details') {
     return (

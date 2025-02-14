@@ -47,12 +47,27 @@ export default function HomePage() {
   const [currentStep, setCurrentStep] = useState<'initial' | 'details' | 'payment'>(
     searchParams.get('step') === 'details' ? 'details' : 'initial'
   )
+  // Add missing state for selected plan
+  const [selectedPlanData, setSelectedPlanData] = useState<{
+    id: string;
+    name: string;
+    price: number;
+    interval: 'monthly' | 'annually';
+  } | null>(null)
 
   // Add state for user profile
   const [userProfile, setUserProfile] = useState<{name?: string, email?: string} | null>(null)
 
   const handleOpenSignup = () => setIsSignupOpen(true)
 
+ // 🟢 Store the selected plan before login redirect
+useEffect(() => {
+  if (selectedPlanData) {
+    console.log('Saving selected plan to sessionStorage:', selectedPlanData);
+    sessionStorage.setItem('selectedPlan', JSON.stringify(selectedPlanData));
+  }
+}, [selectedPlanData]);
+ 
   // First useEffect for handling OAuth
   useEffect(() => {
     const handleAuth = async () => {
@@ -112,6 +127,7 @@ export default function HomePage() {
     }
   }, [searchParams])
 
+  
   // Second useEffect for handling step changes
   useEffect(() => {
     try {
@@ -141,13 +157,23 @@ export default function HomePage() {
     }
   }, [searchParams])
 
+
+  // 🟢 Restore the selected plan after social login redirect
+useEffect(() => {
+  const savedPlan = sessionStorage.getItem('selectedPlan');
+  if (savedPlan) {
+    console.log('Restoring selected plan from sessionStorage:', JSON.parse(savedPlan)); // 🟢 Debugging log
+    setSelectedPlanData(JSON.parse(savedPlan));
+  }
+}, []);
+
   return (
     <>
       <div className="min-h-screen flex flex-col">
         <Header onOpenSignup={handleOpenSignup} />
         
         <main className="flex-grow">
-          <div className="max-w-5xl mx-auto px-6 sm:px-8 lg:px-12">
+          <div className="max-w-screen-xl mx-auto px-6 sm:px-8 lg:px-12">
             {/* Hero Section */}
             <section className="py-20 text-center">
               <h1 className="text-4xl font-bold tracking-tight sm:text-6xl">
@@ -205,10 +231,11 @@ export default function HomePage() {
                               id: PRICING_PLANS.monthly.id,
                               name: 'Monthly',
                               price: PRICING_PLANS.monthly.price,
-                              interval: 'monthly'
+                              interval: 'monthly' as const
                             }
-                            setPlanSelection(planData)
-                            setIsSignupOpen(true)
+                            console.log('Updating selectedPlanData BEFORE modal opens:', planData);
+                            setSelectedPlanData(planData); // ✅ Correctly setting state
+                            setTimeout(() => setIsSignupOpen(true), 50); // ✅ Ensures state updates before modal opens
                           }}
                       className="w-full bg-indigo-600 hover:bg-indigo-700"
                     >
@@ -246,14 +273,16 @@ export default function HomePage() {
                   <div className="mt-auto pt-8">
                     <Button 
                       onClick={() => {
+                            // Create plan data object
                             const planData = {
-                              id: PRICING_PLANS.monthly.id,
-                              name: 'Monthly',
-                              price: PRICING_PLANS.monthly.price,
-                              interval: 'monthly'
+                              id: PRICING_PLANS.annually.id,
+                              name: 'Annual',
+                              price: PRICING_PLANS.annually.price,
+                              interval: 'annually' as const
                             }
-                            setPlanSelection(planData)
-                            setIsSignupOpen(true)
+                            console.log('Updating selectedPlanData BEFORE modal opens:', planData);
+                            setSelectedPlanData(planData); // ✅ Correctly setting state
+                            setTimeout(() => setIsSignupOpen(true), 50); // ✅ Ensures state updates before modal opens
                           }}
                       className="w-full bg-indigo-600 hover:bg-indigo-700"
                     >
@@ -275,12 +304,17 @@ export default function HomePage() {
 
         <Modal
           isOpen={isSignupOpen}
-          onClose={() => setIsSignupOpen(false)}
+          onClose={() => {
+            console.log('Closing modal, clearing selectedPlanData');
+            setIsSignupOpen(false);
+            setTimeout(() => setSelectedPlanData(null), 50); // ✅ Prevents race condition  // Clear selection when modal closes
+        }}
           title="Create your account"
         >
           <SignupForm 
             initialStep={currentStep}
             initialProfile={userProfile}
+            initialPlan={selectedPlanData}
           />
         </Modal>
       </div>
