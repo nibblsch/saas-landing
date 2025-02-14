@@ -40,11 +40,34 @@ export async function GET(req: NextRequest) {
       }
     }
 
-    return NextResponse.redirect(new URL('/?error=auth&message=Invalid authentication response', req.url))
+      // First try to get user data even if there was an error
+      const cookieStore = cookies()
+      const supabase = createRouteHandlerClient({ cookies: () => cookieStore })
+      const { data: { user } } = await supabase.auth.getUser()
+      
+      if (user) {
+        // If we have a user, proceed to details step despite error
+        const profileData = {
+          name: user.user_metadata?.full_name || user.user_metadata?.name || '',
+          email: user.email
+        }
+      
+        const response = NextResponse.redirect(new URL('/?step=details', req.url))
+        response.headers.set(
+          'Set-Cookie',
+          `user_profile=${encodeURIComponent(JSON.stringify(profileData))}; Path=/; Max-Age=3600; SameSite=Lax`
+        )
+        
+        return response
+      }
+      
+      // If no user, then redirect with error
+      return NextResponse.redirect(new URL('/', req.url))
+      
   } catch (error) {
     console.error('Callback error:', error)
     return NextResponse.redirect(
-      new URL('/?error=auth&message=' + encodeURIComponent(error.message), req.url)
+      new URL('/?error=auth&message='   encodeURIComponent(error.message), req.url)
     )
   }
 }
