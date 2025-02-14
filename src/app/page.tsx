@@ -93,7 +93,10 @@ export default function HomePage() {
             // Set cookie with more permissive SameSite
             document.cookie = `user_profile=${encodeURIComponent(JSON.stringify(profileData))}; path=/; max-age=3600; SameSite=Lax`
             
-            window.history.replaceState({}, document.title, window.location.pathname + '?step=details')
+            const newUrl = new URL(window.location.href);
+            newUrl.searchParams.set('step', 'details');
+            window.history.replaceState({}, document.title, newUrl.toString());
+
             setIsSignupOpen(true)
             setCurrentStep('details')
           }
@@ -198,9 +201,15 @@ export default function HomePage() {
                   <div className="mt-auto pt-8">
                     <Button 
                       onClick={() => {
-                        setPlanSelection(PRICING_PLANS.monthly.id)
-                        setIsSignupOpen(true)
-                      }}
+                            const planData = {
+                              id: PRICING_PLANS.monthly.id,
+                              name: 'Monthly',
+                              price: PRICING_PLANS.monthly.price,
+                              interval: 'monthly'
+                            }
+                            setPlanSelection(planData)
+                            setIsSignupOpen(true)
+                          }}
                       className="w-full bg-indigo-600 hover:bg-indigo-700"
                     >
                       Get Started
@@ -237,9 +246,15 @@ export default function HomePage() {
                   <div className="mt-auto pt-8">
                     <Button 
                       onClick={() => {
-                        setPlanSelection(PRICING_PLANS.annually.id)
-                        setIsSignupOpen(true)
-                      }}
+                            const planData = {
+                              id: PRICING_PLANS.monthly.id,
+                              name: 'Monthly',
+                              price: PRICING_PLANS.monthly.price,
+                              interval: 'monthly'
+                            }
+                            setPlanSelection(planData)
+                            setIsSignupOpen(true)
+                          }}
                       className="w-full bg-indigo-600 hover:bg-indigo-700"
                     >
                       Get Started

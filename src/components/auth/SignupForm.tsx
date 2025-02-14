@@ -33,14 +33,19 @@ interface SignupFormProps {
     name?: string;
     email?: string;
   } | null;
+  initialPlan?: SelectedPlan | null;
 }
 
-export function SignupForm({ initialStep = 'initial', initialProfile = null }: SignupFormProps) {
+export function SignupForm({ 
+      initialStep = 'initial', 
+      initialProfile = null,
+      initialPlan = null 
+    }: SignupFormProps) {
   const [mode, setMode] = useState<'signin' | 'signup'>('signup')
   const [step, setStep] = useState<SignupStep>(initialStep)
   const [isLoading, setIsLoading] = useState(false)
   const [error, setError] = useState('')
-  const [selectedPlan, setSelectedPlan] = useState<SelectedPlan | null>(null)
+  const [selectedPlan, setSelectedPlan] = useState<SelectedPlan | null>(initialPlan)
   
   const [formData, setFormData] = useState<SignupFormData>({
     email: '',
@@ -51,6 +56,13 @@ export function SignupForm({ initialStep = 'initial', initialProfile = null }: S
     name: initialProfile?.name || '',
     childAgeMonths: undefined
   })
+
+  // Add useEffect to handle initialPlan changes
+  useEffect(() => {
+       if (initialPlan) {
+         setSelectedPlan(initialPlan)
+       }
+     }, [initialPlan])
 
   // Update useEffect to handle initialProfile changes
   useEffect(() => {
@@ -132,40 +144,39 @@ export function SignupForm({ initialStep = 'initial', initialProfile = null }: S
       setIsLoading(false)
     }
   }
+    {/* OLD CODE
+    if (step === 'profile' || step === 'details') {
+        return (
+          <div className="w-full">
+            <form onSubmit={handleProfileSubmit} className="space-y-6">
 
-  if (step === 'profile') {
-    return (
-      <div className="w-full">
-        <form onSubmit={handleProfileSubmit} className="space-y-4">
-          <div>
-            <label htmlFor="name" className="sr-only">Full Name</label>
-            <input
-              type="text"
-              id="name"
-              placeholder="Full Name"
-              value={profileData.name}
-              onChange={(e) => setProfileData(prev => ({ ...prev, name: e.target.value }))}
-              className="block w-full rounded-lg border border-gray-300 px-3 py-2"
-              required
-            />
-          </div>
-
-          <div>
-            <label htmlFor="childAgeMonths" className="sr-only">Child's Age (months)</label>
-            <input
-              type="number"
-              id="childAgeMonths"
-              placeholder="Child's Age in Months (optional)"
-              value={profileData.childAgeMonths || ''}
-              onChange={(e) => setProfileData(prev => ({ 
-                ...prev, 
-                childAgeMonths: e.target.value ? parseInt(e.target.value) : undefined 
-              }))}
-              min="0"
-              max="60"
-              className="block w-full rounded-lg border border-gray-300 px-3 py-2"
-            />
-          </div>
+            
+              {/* Profile inputs */}
+              {/* OLD CODE
+                <div className="space-y-4">
+                <input
+                  type="text"
+                  placeholder="Full Name"
+                  value={profileData.name}
+                  onChange={(e) => setProfileData(prev => ({ ...prev, name: e.target.value }))}
+                  className="block w-full rounded-lg border border-gray-300 px-3 py-2"
+                  required
+                />
+                <input
+                  type="number"
+                  placeholder="Child's Age in Months (optional)"
+                  value={profileData.childAgeMonths || ''}
+                  onChange={(e) => setProfileData(prev => ({ 
+                    ...prev, 
+                    childAgeMonths: e.target.value ? parseInt(e.target.value) : undefined 
+                  }))}
+                  className="block w-full rounded-lg border border-gray-300 px-3 py-2"
+                />
+              </div>
+              
+              {/* Always show pricing selection */}
+              {/* OLD CODE
+                <div className="border-t border-gray-200 pt-6">
 
           <Button 
             type="submit" 
@@ -174,13 +185,16 @@ export function SignupForm({ initialStep = 'initial', initialProfile = null }: S
           >
             {isLoading ? 'Please wait...' : 'Continue'}
           </Button>
+          </div>
         </form>
       </div>
     )
   }
+  */}
 
+  
    // UPDATE the details step to include simplified pricing
-   if (step === 'details') {
+   if (step === 'profile' || step === 'details') {
     return (
       <div className="w-full">
         {/* Profile form */}
