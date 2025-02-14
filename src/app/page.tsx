@@ -158,14 +158,15 @@ useEffect(() => {
   }, [searchParams])
 
 
-  // 🟢 Restore the selected plan after social login redirect
+// 🟢 Restore selected plan on page load (for both manual & social login)
 useEffect(() => {
   const savedPlan = sessionStorage.getItem('selectedPlan');
   if (savedPlan) {
-    console.log('Restoring selected plan from sessionStorage:', JSON.parse(savedPlan)); // 🟢 Debugging log
+    console.log('Restoring selected plan from sessionStorage:', JSON.parse(savedPlan));
     setSelectedPlanData(JSON.parse(savedPlan));
   }
 }, []);
+
 
   return (
     <>
@@ -233,8 +234,9 @@ useEffect(() => {
                               price: PRICING_PLANS.monthly.price,
                               interval: 'monthly' as const
                             }
-                            console.log('Updating selectedPlanData BEFORE modal opens:', planData);
-                            setSelectedPlanData(planData); // ✅ Correctly setting state
+                            console.log('Updating selectedPlanData & saving to sessionStorage:', planData);
+                            setSelectedPlanData(planData); // ✅ Updates state
+                            sessionStorage.setItem('selectedPlan', JSON.stringify(planData)); // ✅ Saves immediately
                             setTimeout(() => setIsSignupOpen(true), 50); // ✅ Ensures state updates before modal opens
                           }}
                       className="w-full bg-indigo-600 hover:bg-indigo-700"
@@ -280,8 +282,9 @@ useEffect(() => {
                               price: PRICING_PLANS.annually.price,
                               interval: 'annually' as const
                             }
-                            console.log('Updating selectedPlanData BEFORE modal opens:', planData);
-                            setSelectedPlanData(planData); // ✅ Correctly setting state
+                            console.log('Updating selectedPlanData & saving to sessionStorage:', planData);
+                            setSelectedPlanData(planData); // ✅ Updates state
+                            sessionStorage.setItem('selectedPlan', JSON.stringify(planData)); // ✅ Saves immediately
                             setTimeout(() => setIsSignupOpen(true), 50); // ✅ Ensures state updates before modal opens
                           }}
                       className="w-full bg-indigo-600 hover:bg-indigo-700"
