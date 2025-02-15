@@ -7,6 +7,9 @@ import { FaApple, FaTiktok } from 'react-icons/fa'
 // ADD back the Google auth function
 import { signInWithGoogle } from '@/lib/auth'
 import { loadStripe } from '@stripe/stripe-js'
+import { PRICING_PLANS } from '@/config/stripeConfig';
+import { STRIPE_PUBLISHABLE_KEY } from '@/config/stripeConfig'; // 🟢 Import existing key logic
+
 
 // Move interfaces to top
 interface SignupFormData {
@@ -156,15 +159,19 @@ export function SignupForm({
   const handlePaymentStart = async () => {
         setIsLoading(true)
         try {
+          if (!selectedPlan?.interval) {
+              throw new Error('Please select a plan')
+            }
+          // Make request to create checkout session
           const response = await fetch('/api/create-checkout-session', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-              priceId: selectedPlan?.id,
-              customerName: profileData.name,
-              customerEmail: formData.email
-            })
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            planInterval: selectedPlan.interval,  // Send 'monthly' or 'annually' instead of ID
+            customerName: profileData.name,
+            customerEmail: formData.email
           })
+        })
           
           if (!response.ok) {
            const errorData = await response.json()
@@ -172,13 +179,19 @@ export function SignupForm({
            }
 
           const { sessionId } = await response.json()
-          const stripe = await loadStripe(process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY!)
-          
-          if (stripe) {
-            const { error } = await stripe.redirectToCheckout({ sessionId })
-            if (error) throw error
+
+          // Load Stripe and redirect to checkout
+          console.log('Using Stripe Publishable Key:', STRIPE_PUBLISHABLE_KEY); // 🟢 Debug log
+          const stripe = await loadStripe(STRIPE_PUBLISHABLE_KEY!);
+          if (!stripe) {
+            throw new Error('Failed to load Stripe')
           }
-        } catch (err: any) {
+            
+          const { error } = await stripe.redirectToCheckout({ sessionId })
+          if (error) throw error
+          }
+         catch (err: any) {
+          console.error('Payment error:', err)
           setError(err.message || 'An error occurred during checkout')
         } finally {
           setIsLoading(false)
@@ -220,12 +233,7 @@ export function SignupForm({
           <div className="space-y-3">
             <button
               type="button"
-              onClick={() => setSelectedPlan({
-                id: 'price_1Qr6ikFZ3Rvzw5QiPEHCRJ7z',
-                name: 'Monthly',
-                price: 29.99,
-                interval: 'monthly'
-              })}
+              onClick={() => setSelectedPlan(PRICING_PLANS.monthly)}
               className={`w-full flex items-center justify-between p-3 rounded-lg border ${
                 selectedPlan?.interval === 'monthly' 
                   ? 'border-blue-500 bg-blue-50' 
@@ -238,12 +246,7 @@ export function SignupForm({
 
             <button
               type="button"
-              onClick={() => setSelectedPlan({
-                id: 'price_1Qr6ikFZ3Rvzw5QiUxtPylnp',
-                name: 'Annual',
-                price: 23.99,
-                interval: 'annually'
-              })}
+              onClick={() => setSelectedPlan(PRICING_PLANS.annually)}
               className={`w-full flex items-center justify-between p-3 rounded-lg border ${
                 selectedPlan?.interval === 'annually' 
                   ? 'border-blue-500 bg-blue-50' 

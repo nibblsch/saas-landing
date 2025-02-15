@@ -1,12 +1,14 @@
 // ADD NEW FILE: src/lib/stripe.ts
 import Stripe from 'stripe'
+import { STRIPE_SECRET_KEY } from '@/config/stripeConfig'; // 🟢 Import centralized key
 
-if (!process.env.STRIPE_SECRET_KEY) {
-  throw new Error('Missing Stripe secret key')
-}
 
-export const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, {
-  apiVersion: '2023-10-16',
+  if (!STRIPE_SECRET_KEY) {
+      throw new Error('Missing Stripe secret key (updated logic lib stripe.ts file)')
+    }
+
+export const stripe = new Stripe(STRIPE_SECRET_KEY!, {
+  apiVersion: '2022-11-15',
   typescript: true,
 })
 

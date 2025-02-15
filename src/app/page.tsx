@@ -10,9 +10,10 @@ import { CheckIcon } from 'lucide-react'
 import { setPlanSelection } from '@/store/planSelection'
 import { useSearchParams, useRouter } from 'next/navigation'
 import supabase from '@/lib/supabase'
+import { PRICING_PLANS } from '@/config/stripeConfig';
 
-
-const PRICING_PLANS = {
+{/* OLD CODE REPLACED BY IMPORT 
+  const PRICING_PLANS = {
   monthly: {
     id: 'price_1Qr6ikFZ3Rvzw5QiPEHCRJ7z', //test
     price: 29.99,
@@ -39,6 +40,7 @@ const PRICING_PLANS = {
     savings: 'Save 20%'
   }
 }
+  */}
 
 export default function HomePage() {
   const searchParams = useSearchParams()
@@ -59,6 +61,9 @@ export default function HomePage() {
   const [userProfile, setUserProfile] = useState<{name?: string, email?: string} | null>(null)
 
   const handleOpenSignup = () => setIsSignupOpen(true)
+
+  console.log("PRICING_PLANS:", PRICING_PLANS);
+
 
  // 🟢 Store the selected plan before login redirect
 useEffect(() => {
