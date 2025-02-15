@@ -6,6 +6,7 @@ import { FcGoogle } from 'react-icons/fc'
 import { FaApple, FaTiktok } from 'react-icons/fa'
 // ADD back the Google auth function
 import { signInWithGoogle } from '@/lib/auth'
+import { loadStripe } from '@stripe/stripe-js'
 
 // Move interfaces to top
 interface SignupFormData {
@@ -55,6 +56,8 @@ export function SignupForm({
     name: initialProfile?.name || '',
     childAgeMonths: undefined
   })
+  const [checkoutSession, setCheckoutSession] = useState<string | null>(null)
+
 
   // Effect hooks
   useEffect(() => {
@@ -139,16 +142,48 @@ export function SignupForm({
     setIsLoading(true)
     setError('')
     try {
-      // Profile submission logic will go here
-      console.log('Profile data:', profileData)
-      // On success:
-      window.location.href = '/pricing'
+      if (!selectedPlan) throw new Error('Please select a plan');
+
+      await handlePaymentStart()
     } catch (err: any) {
       setError(err.message)
     } finally {
       setIsLoading(false)
     }
-  }
+  };
+
+  //Stripe handler
+  const handlePaymentStart = async () => {
+        setIsLoading(true)
+        try {
+          const response = await fetch('/api/create-checkout-session', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              priceId: selectedPlan?.id,
+              customerName: profileData.name,
+              customerEmail: formData.email
+            })
+          })
+          
+          if (!response.ok) {
+           const errorData = await response.json()
+           throw new Error(errorData.error || 'Failed to create checkout session')
+           }
+
+          const { sessionId } = await response.json()
+          const stripe = await loadStripe(process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY!)
+          
+          if (stripe) {
+            const { error } = await stripe.redirectToCheckout({ sessionId })
+            if (error) throw error
+          }
+        } catch (err: any) {
+          setError(err.message || 'An error occurred during checkout')
+        } finally {
+          setIsLoading(false)
+        }
+      }
 
   // Render methods
   const renderProfileAndDetails = () => (
@@ -186,7 +221,7 @@ export function SignupForm({
             <button
               type="button"
               onClick={() => setSelectedPlan({
-                id: 'prod_RkcmFAgddLLJfn',
+                id: 'price_1Qr6ikFZ3Rvzw5QiPEHCRJ7z',
                 name: 'Monthly',
                 price: 29.99,
                 interval: 'monthly'
@@ -204,7 +239,7 @@ export function SignupForm({
             <button
               type="button"
               onClick={() => setSelectedPlan({
-                id: 'prod_RkcnX78pXVNKpu',
+                id: 'price_1Qr6ikFZ3Rvzw5QiUxtPylnp',
                 name: 'Annual',
                 price: 23.99,
                 interval: 'annually'

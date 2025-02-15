@@ -21,9 +21,9 @@ type BillingInterval = 'monthly' | 'annually'
 
 const PRICING_PLANS = {
   monthly: {
-    id: 'prod_RkcmFAgddLLJfn',
+    id: 'price_1Qr6ikFZ3Rvzw5QiPEHCRJ7z', //test
     price: 29.99,
-    name: 'Monthly Plan',
+    name: 'Monthly',
     description: 'Get started with BabyGPT',
     features: [
       'Unlimited AI consultations',
@@ -33,9 +33,9 @@ const PRICING_PLANS = {
     ]
   },
   annually: {
-    id: 'prod_RkcnX78pXVNKpu',
+    id: 'price_1Qr6ikFZ3Rvzw5QiUxtPylnp', //test
     price: 287.88,
-    name: 'Annual Plan',
+    name: 'Annual',
     description: 'Save 20% with annual billing',
     features: [
       'All Monthly Plan features',

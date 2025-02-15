@@ -14,7 +14,7 @@ import supabase from '@/lib/supabase'
 
 const PRICING_PLANS = {
   monthly: {
-    id: 'prod_RkcmFAgddLLJfn',
+    id: 'price_1Qr6ikFZ3Rvzw5QiPEHCRJ7z', //test
     price: 29.99,
     name: 'Monthly',
     features: [
@@ -25,7 +25,7 @@ const PRICING_PLANS = {
     ]
   },
   annually: {
-    id: 'prod_RkcnX78pXVNKpu',
+    id: 'price_1Qr6ikFZ3Rvzw5QiUxtPylnp', //test
     price: 23.99,
     fullPrice: 287.88,
     name: 'Annual',
