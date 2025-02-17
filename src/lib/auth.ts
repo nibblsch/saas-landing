@@ -34,6 +34,27 @@ export async function signInWithGoogle() {
   return { data, error }
 }
 
+export const signInWithTikTok = async () => {
+    const supabase = createClientComponentClient()
+    return await supabase.auth.signInWithOAuth({
+      provider: 'tiktok',
+      options: {
+        redirectTo: `${process.env.NEXT_PUBLIC_SITE_URL}/auth/callback`
+      }
+    })
+  }
+  
+  export const signInWithApple = async () => {
+    const supabase = createClientComponentClient()
+    return await supabase.auth.signInWithOAuth({
+      provider: 'apple',
+      options: {
+        redirectTo: `${process.env.NEXT_PUBLIC_SITE_URL}/auth/callback`
+      }
+    })
+  }
+
+
 export async function signOut() {
   const { error } = await supabase.auth.signOut()
   return { error }

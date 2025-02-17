@@ -1,4 +1,7 @@
-// ADD NEW FILE: src/app/api/create-checkout-session/route.ts
+/*******************************************
+ * FILE: src/app/api/create-checkout-session/route.ts
+ * PURPOSE: Creates Stripe checkout sessions for subscription purchases
+ *******************************************/
 import { createRouteHandlerClient } from '@supabase/auth-helpers-nextjs'
 import { cookies } from 'next/headers'
 import { NextResponse } from 'next/server'
@@ -7,15 +10,13 @@ import { PRICING_PLANS } from '@/config/stripeConfig';
 
 export async function POST(request: Request) {
   try {
-    //Get Request Data
-    // const { priceId, customerName, customerEmail } = await request.json()
+     // 1. Extract and validate request data
     const { planInterval, customerName, customerEmail } = await request.json()
     // Log request data for debugging
     console.log('Checkout request:', { planInterval, customerName, customerEmail })
     
-    // Determine price ID based on plan interval and environment
+    // 2.Determine price ID based on plan interval and environment
     let priceId: string
-    // Select correct price ID based on environment and interval
     if (process.env.NODE_ENV === 'production') {
       priceId = planInterval === 'monthly' 
         ? process.env.STRIPE_PRICE_MONTHLY_PROD!
@@ -25,17 +26,15 @@ export async function POST(request: Request) {
         ? process.env.STRIPE_PRICE_MONTHLY_TEST!
         : process.env.STRIPE_PRICE_ANNUALLY_TEST!
     }
-    
     console.log('Using Stripe price ID:', priceId)
     
-    // Get Supabase client
+    // 3. Get authenticated user session - Supabase client
     const cookieStore = await cookies()
     const supabase = createRouteHandlerClient({ cookies: () => cookieStore })
-    
     // Get user session
     const { data: { session }, error: authError } = await supabase.auth.getSession()
-    if (authError) throw authError
     
+    if (authError) throw authError
     if (!session?.user) {
       return NextResponse.json(
         { error: 'Not authenticated' },
@@ -43,9 +42,8 @@ export async function POST(request: Request) {
       )
     }
 
-    // Create or get Stripe customer
+    // 4. Create or get Stripe customer
     let customerId: string
-
     // Find existing customer or create new one
       const { data: customer } = await supabase
         .from('customers')
@@ -74,8 +72,8 @@ export async function POST(request: Request) {
 
         customerId = stripeCustomer.id
       }
-    
-    // Create Stripe checkout session
+
+    // 5. Create Stripe checkout session
     const checkoutSession = await stripe.checkout.sessions.create({
       customer: customerId,
       line_items: [{ 
@@ -85,19 +83,22 @@ export async function POST(request: Request) {
       mode: 'subscription',
       success_url: `${process.env.NEXT_PUBLIC_SITE_URL}/success?session_id={CHECKOUT_SESSION_ID}`,
       cancel_url: `${process.env.NEXT_PUBLIC_SITE_URL}/?step=details`,
+      payment_method_types: ['card', 'paypal'],
+      billing_address_collection: 'required',
+      // customer_email: customerEmail, // Pre-fill email - removed so its not sent to Stripe to cause error
       customer_update: {
         name: 'auto',
         address: 'auto'
       },
-      billing_address_collection: 'required',
-      payment_method_types: ['card'],
       allow_promotion_codes: true
     })
 
+    // 6. Return session details
     return NextResponse.json({ 
       sessionId: checkoutSession.id,
       customerId 
     })
+
   } catch (error: any) {
     console.error('Checkout error:', error)
     return NextResponse.json(

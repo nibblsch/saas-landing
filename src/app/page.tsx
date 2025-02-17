@@ -12,35 +12,6 @@ import { useSearchParams, useRouter } from 'next/navigation'
 import supabase from '@/lib/supabase'
 import { PRICING_PLANS } from '@/config/stripeConfig';
 
-{/* OLD CODE REPLACED BY IMPORT 
-  const PRICING_PLANS = {
-  monthly: {
-    id: 'price_1Qr6ikFZ3Rvzw5QiPEHCRJ7z', //test
-    price: 29.99,
-    name: 'Monthly',
-    features: [
-      'Unlimited AI consultations',
-      '24/7 availability',
-      'Research-backed answers',
-      'Cancel anytime'
-    ]
-  },
-  annually: {
-    id: 'price_1Qr6ikFZ3Rvzw5QiUxtPylnp', //test
-    price: 23.99,
-    fullPrice: 287.88,
-    name: 'Annual',
-    features: [
-      'All Monthly features',
-      'Priority support',
-      'Exclusive content',
-      'Personalized insights'
-    ],
-    badge: 'Best Value',
-    savings: 'Save 20%'
-  }
-}
-  */}
 
 export default function HomePage() {
   const searchParams = useSearchParams()
@@ -49,6 +20,7 @@ export default function HomePage() {
   const [currentStep, setCurrentStep] = useState<'initial' | 'details' | 'payment'>(
     searchParams.get('step') === 'details' ? 'details' : 'initial'
   )
+  
   // Add missing state for selected plan
   const [selectedPlanData, setSelectedPlanData] = useState<{
     id: string;
@@ -175,9 +147,7 @@ useEffect(() => {
 
   return (
     <>
-      <div className="min-h-screen flex flex-col">
-        <Header onOpenSignup={handleOpenSignup} />
-        
+      <Header onOpenSignup={handleOpenSignup} />
         <main className="flex-grow">
           <div className="max-w-screen-xl mx-auto px-6 sm:px-8 lg:px-12">
             {/* Hero Section */}
@@ -188,6 +158,7 @@ useEffect(() => {
               <p className="mt-6 text-lg text-gray-600 max-w-3xl mx-auto">
                 Get instant, reliable answers to all your parenting questions - from feeding schedules to sleep training
               </p>
+
               <div className="mt-10">
                 <Button onClick={handleOpenSignup}>
                   Get Started Now
@@ -325,7 +296,6 @@ useEffect(() => {
             initialPlan={selectedPlanData}
           />
         </Modal>
-      </div>
-    </>
+      </>
   )
 }

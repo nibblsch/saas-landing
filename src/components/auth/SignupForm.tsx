@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { Button } from '../ui/Button'
 import { FcGoogle } from 'react-icons/fc'
 import { FaApple, FaTiktok } from 'react-icons/fa'
@@ -9,7 +9,9 @@ import { signInWithGoogle } from '@/lib/auth'
 import { loadStripe } from '@stripe/stripe-js'
 import { PRICING_PLANS } from '@/config/stripeConfig';
 import { STRIPE_PUBLISHABLE_KEY } from '@/config/stripeConfig'; // 🟢 Import existing key logic
-
+import zxcvbn from 'zxcvbn' // For password strength checking
+import ReCAPTCHA from 'react-google-recaptcha' // 🔹 Use reCAPTCHA 
+import React from 'react'
 
 // Move interfaces to top
 interface SignupFormData {
@@ -38,6 +40,8 @@ interface SignupFormProps {
   initialPlan?: SelectedPlan | null;
 }
 
+
+
 type SignupStep = 'initial' | 'details' | 'checkout' //Added checkout step
 
 export function SignupForm({ 
@@ -45,6 +49,7 @@ export function SignupForm({
   initialProfile = null,
   initialPlan = null 
 }: SignupFormProps) {
+
   // State declarations
   const [mode, setMode] = useState<'signin' | 'signup'>('signup')
   const [step, setStep] = useState<SignupStep>(initialStep)
@@ -60,7 +65,9 @@ export function SignupForm({
     childAgeMonths: undefined
   })
   const [checkoutSession, setCheckoutSession] = useState<string | null>(null)
-
+  const [passwordStrength, setPasswordStrength] = useState(0)
+  const recaptchaRef = useRef<ReCAPTCHA>(null)
+  
 
   // Effect hooks
   useEffect(() => {
@@ -99,8 +106,22 @@ export function SignupForm({
   const handleSocialLogin = async (provider: string) => {
     setIsLoading(true)
     try {
-      // Social login logic will go here
-      console.log(`${provider} login clicked`)
+      let result;
+      switch(provider) {
+        case 'apple':
+          result = await signInWithApple();
+          break;
+        case 'tiktok':
+          result = await signInWithTikTok();
+          break;
+        default:
+          throw new Error('Unknown provider');
+      }
+      
+      if (result.error) throw result.error
+      if (result.data?.url) {
+        window.location.href = result.data.url
+      }
     } catch (err: any) {
       setError(err.message)
     } finally {
@@ -124,17 +145,56 @@ export function SignupForm({
     }
   }
 
+  // Add cleanup for reCAPTCHA token
+  useEffect(() => {
+    return () => {
+      if (recaptchaRef.current) {
+        recaptchaRef.current.reset();
+      }
+    };
+  }, []);
+
+  // Form Submission with reCAPTCHA v3
   const handleInitialSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     setIsLoading(true)
     setError('')
+    
     try {
-      // Initial auth logic will go here
-      console.log('Initial auth:', formData)
-      // On success:
+      // Check password strength
+      if (passwordStrength < 3) {
+        throw new Error('Please choose a stronger password')
+      }
+
+      // Verify reCAPTCHA
+      if (!recaptchaRef.current) {
+           throw new Error('reCAPTCHA not yet loaded')
+         }
+           const token = await new Promise<string | null>((resolve) => {
+            recaptchaRef.current?.execute()
+              .then(token => resolve(token))
+              .catch(() => resolve(null));
+          });
+          if (!token) {
+            throw new Error('Failed to execute reCAPTCHA')
+         }
+
+
+      // Verify token with backend
+      const recaptchaResponse = await fetch('/api/verify-recaptcha', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ token })
+      })
+      
+      if (!recaptchaResponse.ok) {
+        throw new Error('Failed to verify reCAPTCHA')
+      }
+
+            // Proceed with signup process
       setStep('profile')
-    } catch (err: any) {
-      setError(err.message)
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'An error occurred')
     } finally {
       setIsLoading(false)
     }
@@ -168,7 +228,7 @@ export function SignupForm({
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
             planInterval: selectedPlan.interval,  // Send 'monthly' or 'annually' instead of ID
-            customerName: profileData.name,
+            customerName: profileData.name,  // Keep this as it's used for new customer creation
             customerEmail: formData.email
           })
         })
@@ -183,6 +243,7 @@ export function SignupForm({
           // Load Stripe and redirect to checkout
           console.log('Using Stripe Publishable Key:', STRIPE_PUBLISHABLE_KEY); // 🟢 Debug log
           const stripe = await loadStripe(STRIPE_PUBLISHABLE_KEY!);
+          
           if (!stripe) {
             throw new Error('Failed to load Stripe')
           }
@@ -198,7 +259,22 @@ export function SignupForm({
         }
       }
 
-  // Render methods
+  // Check Password function
+  const checkPasswordStrength = (password: string) => {
+    const result = zxcvbn(password)
+    setPasswordStrength(result.score) // 0-4, with 4 being strongest
+    return result.score >= 3 // Returns true if password is strong enough
+}
+
+
+  const resetForm = () => {
+    setFormData({ email: '', password: '' })
+    setPasswordStrength(0)
+    setError('')
+  }
+
+  
+  // Render methods (FORM)
   const renderProfileAndDetails = () => (
     <div className="w-full">
       <form onSubmit={handleProfileSubmit} className="space-y-6">
@@ -274,8 +350,8 @@ export function SignupForm({
     </div>
   )
 
+  // ✅ Wrapped the render function with GoogleReCaptchaProvider
   const renderInitialForm = () => (
-    <>
       <div className="w-full">
         {error && (
           <div className="mb-4 p-3 text-sm text-red-500 bg-red-50 rounded-lg">
@@ -340,11 +416,32 @@ export function SignupForm({
               id="password"
               placeholder="Password"
               value={formData.password}
-              onChange={(e) => setFormData(prev => ({ ...prev, password: e.target.value }))}
+              onChange={(e) => {
+                const newPassword = e.target.value
+                setFormData(prev => ({ ...prev, password: newPassword }))
+                checkPasswordStrength(newPassword)
+              }}
               className="block w-full rounded-lg border border-gray-300 px-3 py-2"
               required
             />
-          </div>
+           {formData.password && (
+              <div className="mt-1">
+                <div className="h-1 flex gap-1">
+                  {[1, 2, 3, 4].map((level) => (
+                    <div
+                      key={level}
+                      className={`flex-1 rounded-full ${
+                        passwordStrength >= level ? 'bg-green-500' : 'bg-gray-200'
+                      }`}
+                    />
+                  ))}
+                </div>
+                <p className="mt-1 text-sm text-gray-500">
+                  {passwordStrength < 3 ? 'Password is too weak' : 'Password strength is good'}
+                </p>
+              </div>
+            )}
+          </div>           
 
           <Button 
             type="submit" 
@@ -360,7 +457,10 @@ export function SignupForm({
           <span className="text-gray-600">
             {mode === 'signin' ? "Don't have an account? " : "Already have an account? "}
             <button
-              onClick={() => setMode(mode === 'signin' ? 'signup' : 'signin')}
+              onClick={() => {
+                setMode(mode === 'signin' ? 'signup' : 'signin')
+                resetForm()
+              }}
               className="text-blue-600 hover:text-blue-700"
             >
               {mode === 'signin' ? 'Sign up' : 'Sign in'}
@@ -368,13 +468,34 @@ export function SignupForm({
           </span>
         </div>
       </div>
-    </>
-  )
+     
+    )
+  
 
   // Main render
   if (step === 'profile' || step === 'details') {
     return renderProfileAndDetails()
   }
 
-  return renderInitialForm()
+  return (
+    <>
+     <ReCAPTCHA
+      ref={recaptchaRef}
+      size="invisible"
+      sitekey={process.env.NEXT_PUBLIC_RECAPTCHA_SITE_KEY!}
+      className="g-recaptcha-badge-custom"
+      
+      />
+      <style jsx global>{`
+        .g-recaptcha-badge-custom {
+          position: fixed !important;
+          bottom: 10px !important;
+          right: 10px !important;
+          z-index: 2147483645 !important;
+          transform: scale(0.6) !important;
+        }
+      `}</style>
+        {step === 'profile' || step === 'details' ? renderProfileAndDetails() : renderInitialForm()}
+      </>
+    ) 
 }
