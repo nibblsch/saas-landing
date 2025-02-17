@@ -11,6 +11,7 @@ import { setPlanSelection } from '@/store/planSelection'
 import { useSearchParams, useRouter } from 'next/navigation'
 import supabase from '@/lib/supabase'
 import { PRICING_PLANS } from '@/config/stripeConfig';
+import { usePostHog } from 'posthog-js/react'
 
 
 export default function HomePage() {
@@ -20,6 +21,7 @@ export default function HomePage() {
   const [currentStep, setCurrentStep] = useState<'initial' | 'details' | 'payment'>(
     searchParams.get('step') === 'details' ? 'details' : 'initial'
   )
+  const posthog = usePostHog()
   
   // Add missing state for selected plan
   const [selectedPlanData, setSelectedPlanData] = useState<{
@@ -32,10 +34,22 @@ export default function HomePage() {
   // Add state for user profile
   const [userProfile, setUserProfile] = useState<{name?: string, email?: string} | null>(null)
 
-  const handleOpenSignup = () => setIsSignupOpen(true)
+  const handleOpenSignup = () => {
+        posthog?.capture('signup_modal_opened')
+        setIsSignupOpen(true)
+      }
 
   console.log("PRICING_PLANS:", PRICING_PLANS);
 
+  // Track page view on mount
+  useEffect(() => {
+      posthog?.capture('landing_page_viewed', {
+        referrer: document.referrer,
+        utm_source: searchParams.get('utm_source'),
+        utm_medium: searchParams.get('utm_medium'),
+        utm_campaign: searchParams.get('utm_campaign')
+      })
+    }, [searchParams])
 
  // 🟢 Store the selected plan before login redirect
 useEffect(() => {
@@ -210,6 +224,10 @@ useEffect(() => {
                               price: PRICING_PLANS.monthly.price,
                               interval: 'monthly' as const
                             }
+                            posthog?.capture('plan_selected', {
+                                    plan_type: 'monthly',
+                                    plan_price: PRICING_PLANS.monthly.price
+                                  })
                             console.log('Updating selectedPlanData & saving to sessionStorage:', planData);
                             setSelectedPlanData(planData); // ✅ Updates state
                             sessionStorage.setItem('selectedPlan', JSON.stringify(planData)); // ✅ Saves immediately
@@ -258,6 +276,10 @@ useEffect(() => {
                               price: PRICING_PLANS.annually.price,
                               interval: 'annually' as const
                             }
+                            posthog?.capture('plan_selected', {
+                                    plan_type: 'annual',
+                                    plan_price: PRICING_PLANS.annually.price
+                                  })
                             console.log('Updating selectedPlanData & saving to sessionStorage:', planData);
                             setSelectedPlanData(planData); // ✅ Updates state
                             sessionStorage.setItem('selectedPlan', JSON.stringify(planData)); // ✅ Saves immediately

@@ -12,6 +12,7 @@ import { STRIPE_PUBLISHABLE_KEY } from '@/config/stripeConfig'; // 🟢 Import e
 import zxcvbn from 'zxcvbn' // For password strength checking
 import ReCAPTCHA from 'react-google-recaptcha' // 🔹 Use reCAPTCHA 
 import React from 'react'
+import { usePostHog } from 'posthog-js/react'
 
 // Move interfaces to top
 interface SignupFormData {
@@ -67,6 +68,7 @@ export function SignupForm({
   const [checkoutSession, setCheckoutSession] = useState<string | null>(null)
   const [passwordStrength, setPasswordStrength] = useState(0)
   const recaptchaRef = useRef<ReCAPTCHA>(null)
+  const posthog = usePostHog()
   
 
   // Effect hooks
@@ -102,9 +104,23 @@ export function SignupForm({
     }
   }, [initialProfile?.name])
 
+    // Add debug logging for step changes
+    useEffect(() => {
+      console.log('Current step:', step)
+      if (step !== initialStep) {
+        posthog?.capture('signup_step_viewed', {
+          step: step,
+          timestamp: new Date().toISOString()
+        })
+      }
+    }, [step])
+
   // Event handlers
   const handleSocialLogin = async (provider: string) => {
     setIsLoading(true)
+    posthog?.capture('signup_started', {
+      signup_method: provider
+    })
     try {
       let result;
       switch(provider) {
@@ -123,6 +139,10 @@ export function SignupForm({
         window.location.href = result.data.url
       }
     } catch (err: any) {
+      posthog?.capture('signup_error', {
+        error_type: err.message,
+        signup_method: provider
+      })
       setError(err.message)
     } finally {
       setIsLoading(false)
@@ -160,6 +180,10 @@ export function SignupForm({
     setIsLoading(true)
     setError('')
     
+    posthog?.capture('signup_started', {
+            signup_method: 'email'
+          })
+
     try {
       // Check password strength
       if (passwordStrength < 3) {
@@ -176,6 +200,9 @@ export function SignupForm({
               .catch(() => resolve(null));
           });
           if (!token) {
+            posthog?.capture('signup_error', {
+                       error_type: 'recaptcha_failed'
+                     })
             throw new Error('Failed to execute reCAPTCHA')
          }
 
@@ -191,9 +218,20 @@ export function SignupForm({
         throw new Error('Failed to verify reCAPTCHA')
       }
 
-            // Proceed with signup process
+      
+      // Track successful email/password submission
+      posthog?.capture('signup_step_completed', {
+        step: 'initial',
+        method: 'email',
+        timestamp: new Date().toISOString()
+      })
+      // Proceed with signup process
       setStep('profile')
     } catch (err) {
+      posthog?.capture('signup_error', {
+        error_type: err instanceof Error ? err.message : 'unknown_error',
+        step: 'initial'
+      })
       setError(err instanceof Error ? err.message : 'An error occurred')
     } finally {
       setIsLoading(false)
@@ -204,11 +242,22 @@ export function SignupForm({
     e.preventDefault()
     setIsLoading(true)
     setError('')
+    
     try {
+      posthog?.capture('signup_step_completed', {
+        signup_step: 'profile',
+        has_child_age: !!profileData.childAgeMonths,
+        timestamp: new Date().toISOString()
+      })
       if (!selectedPlan) throw new Error('Please select a plan');
 
       await handlePaymentStart()
     } catch (err: any) {
+      posthog?.capture('signup_error', {
+        signup_step: 'profile',
+        error: err.message,
+        timestamp: new Date().toISOString()
+      })
       setError(err.message)
     } finally {
       setIsLoading(false)
@@ -218,7 +267,13 @@ export function SignupForm({
   //Stripe handler
   const handlePaymentStart = async () => {
         setIsLoading(true)
+        
         try {
+          posthog?.capture('checkout_started', {
+            plan_type: selectedPlan?.interval,
+            plan_price: selectedPlan?.price,
+            timestamp: new Date().toISOString()
+          })
           if (!selectedPlan?.interval) {
               throw new Error('Please select a plan')
             }
@@ -245,13 +300,32 @@ export function SignupForm({
           const stripe = await loadStripe(STRIPE_PUBLISHABLE_KEY!);
           
           if (!stripe) {
+            posthog?.capture('checkout_error', {
+              error_type: 'stripe_load_failed'
+            })
             throw new Error('Failed to load Stripe')
           }
-            
+          
+          //Capture completed checkout step
+          posthog?.capture('checkout_completed', {
+            plan_type: selectedPlan?.interval,
+            plan_price: selectedPlan?.price,
+            timestamp: new Date().toISOString()
+          });
+
           const { error } = await stripe.redirectToCheckout({ sessionId })
-          if (error) throw error
+          if (error) {
+            posthog?.capture('checkout_error', {
+              error_type: error.message
+            })
+            throw error
+          }
+        
           }
          catch (err: any) {
+        posthog?.capture('checkout_error', {
+            error_type: err.message || 'unknown_error'
+          })
           console.error('Payment error:', err)
           setError(err.message || 'An error occurred during checkout')
         } finally {
