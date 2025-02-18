@@ -22,6 +22,7 @@ export default function HomePage() {
     searchParams.get('step') === 'details' ? 'details' : 'initial'
   )
   const posthog = usePostHog()
+  const sessionId = searchParams.get('session_id')
   
   // Add missing state for selected plan
   const [selectedPlanData, setSelectedPlanData] = useState<{

@@ -305,14 +305,14 @@ export function SignupForm({
             })
             throw new Error('Failed to load Stripe')
           }
-          
+          {/*
           //Capture completed checkout step
-          posthog?.capture('checkout_completed', {
+            posthog?.capture('checkout_completed', {
             plan_type: selectedPlan?.interval,
             plan_price: selectedPlan?.price,
             timestamp: new Date().toISOString()
           });
-
+            */}
           const { error } = await stripe.redirectToCheckout({ sessionId })
           if (error) {
             posthog?.capture('checkout_error', {

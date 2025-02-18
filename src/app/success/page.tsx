@@ -18,6 +18,12 @@ interface Message {
   timestamp: Date
 }
 
+  // Add new interface for popup state
+  interface HighTrafficPopup {
+    show: boolean
+    message: string
+  }
+
 export default function SuccessPage() {
   // State management
   const searchParams = useSearchParams()
@@ -28,6 +34,16 @@ export default function SuccessPage() {
   const [isLoading, setIsLoading] = useState(false)
   const messagesEndRef = useRef<HTMLDivElement>(null)
   const textareaRef = useRef<HTMLTextAreaElement>(null)
+
+
+     // Add new state for contact form and popup
+   const [showContactForm, setShowContactForm] = useState(false)
+   const [contactEmail, setContactEmail] = useState('')
+   const [contactMessage, setContactMessage] = useState('')
+   const [popup, setPopup] = useState<HighTrafficPopup>({
+     show: true,
+     message: 'BabyGPT is currently experiencing a period of increased requests. Please check back in a few minutes.'
+   })
 
   // Auto-scroll to bottom when new messages arrive
   const scrollToBottom = () => {
@@ -40,8 +56,15 @@ export default function SuccessPage() {
 
   useEffect(() => {
     if (sessionId) {
+    // Track checkout completion
       posthog?.capture('checkout_completed', {
         signup_step: 'checkout',
+        session_id: sessionId,
+        timestamp: new Date().toISOString()
+      })
+
+    // Track payment success
+      posthog?.capture('payment_successful', {
         session_id: sessionId,
         timestamp: new Date().toISOString()
       })
@@ -52,6 +75,15 @@ export default function SuccessPage() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     if (!input.trim() || isLoading) return
+
+    // Show high traffic popup on first message
+    if (messages.length === 0) {
+      setPopup({
+        show: true,
+        message: 'BabyGPT is currently experiencing a period of increased requests. Please check back in a few minutes.'
+      })
+      return
+    }
 
     // Add user message
     const userMessage: Message = {
@@ -83,6 +115,35 @@ export default function SuccessPage() {
     setInput(textarea.value)
   }
 
+     // Add contact form handler
+   const handleContactSubmit = async (e: React.FormEvent) => {
+     e.preventDefault()
+     try {
+       const response = await fetch('/api/contact', {
+         method: 'POST',
+         headers: { 'Content-Type': 'application/json' },
+         body: JSON.stringify({
+           email: contactEmail,
+           message: contactMessage,
+           to: 'thebabygpt@gmail.com'
+         })
+       })
+       
+       if (!response.ok) throw new Error('Failed to send message')
+       
+       setContactEmail('')
+       setContactMessage('')
+       setShowContactForm(false)
+       
+       // Show success message
+       alert('Message sent successfully!')
+     } catch (error) {
+       console.error('Error sending message:', error)
+       alert('Failed to send message. Please try again.')
+     }
+   }
+
+   {/*
   return (
     <div className="min-h-screen flex items-center justify-center bg-gray-50 py-12 px-4 sm:px-6 lg:px-8">
       <div className="max-w-md w-full space-y-8">
@@ -95,7 +156,7 @@ export default function SuccessPage() {
       </div>
     </div>
   )
-
+    */}
 
   return (
     <div className="flex h-screen">
@@ -124,6 +185,18 @@ export default function SuccessPage() {
 
       {/* Main content */}
       <div className="flex-1 flex flex-col bg-white">
+        {/* High Traffic Popup */}
+        {popup.show && (
+          <div className="absolute top-4 right-4 left-4 bg-yellow-50 border border-yellow-200 rounded-lg p-4 z-50 flex justify-between items-center">
+            <p className="text-yellow-800">{popup.message}</p>
+            <button
+              onClick={() => setPopup(prev => ({ ...prev, show: false }))}
+              className="text-yellow-800 hover:text-yellow-900"
+            >
+              <X size={16} />
+            </button>
+          </div>
+        )}
         {/* Chat header */}
         <header className="p-4 border-b">
           <h1 className="text-xl font-semibold">BabyGPT Chat</h1>
@@ -177,6 +250,54 @@ export default function SuccessPage() {
           </form>
         </div>
       </div>
+
+            {/* Contact Form Modal */}
+      {showContactForm && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className="bg-white rounded-lg p-6 max-w-md w-full">
+            <div className="flex justify-between items-center mb-4">
+              <h2 className="text-xl font-semibold">Contact Us</h2>
+              <button
+                onClick={() => setShowContactForm(false)}
+                className="text-gray-500 hover:text-gray-700"
+              >
+                <X size={16} />
+              </button>
+            </div>
+            <form onSubmit={handleContactSubmit} className="space-y-4">
+              <div>
+                <label htmlFor="email" className="block text-sm font-medium text-gray-700">
+                  Email
+                </label>
+                <input
+                  type="email"
+                  id="email"
+                  value={contactEmail}
+                  onChange={(e) => setContactEmail(e.target.value)}
+                  className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2"
+                  required
+                />
+              </div>
+              <div>
+                <label htmlFor="message" className="block text-sm font-medium text-gray-700">
+                  Message
+                </label>
+                <textarea
+                  id="message"
+                  value={contactMessage}
+                  onChange={(e) => setContactMessage(e.target.value)}
+                  rows={4}
+                  className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2"
+                  required
+                />
+              </div>
+              <Button type="submit" className="w-full">
+                Send Message
+              </Button>
+            </form>
+          </div>
+        </div>
+      )}
     </div>
   )
 }
