@@ -1,7 +1,7 @@
 'use client' // Add this since we're using onClick
 
 import Link from 'next/link'
-import { Button } from '../ui/Button'
+import { Button } from '../ui/button'
 
 // Add prop type for modal trigger
 type HeaderProps = {

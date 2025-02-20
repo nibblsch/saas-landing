@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useEffect, useRef } from 'react'
-import { Button } from '../ui/Button'
+import { Button } from '../ui/button'
 import { FcGoogle } from 'react-icons/fc'
 import { FaApple, FaTiktok } from 'react-icons/fa'
 // ADD back the Google auth function

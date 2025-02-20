@@ -3,6 +3,7 @@ import { Geist, Geist_Mono, Inter } from "next/font/google";
 import "./globals.css";
 import { AuthProvider } from '@/context/AuthContext'
 import { PostHogProvider } from './providers'
+import { Inter } from 'next/font/google';
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -13,6 +14,8 @@ const geistMono = Geist_Mono({
   variable: "--font-geist-mono",
   subsets: ["latin"],
 });
+
+const inter = Inter({ subsets: ['latin'] });
 
 export const metadata: Metadata = {
   title: "BabyGPT",

@@ -1,31 +1,53 @@
 import { NextResponse } from 'next/server'
 import nodemailer from 'nodemailer'
+import { google } from 'googleapis';  // ✅ Ensure google is imported
 
 export async function POST(req: Request) {
   try {
     const { email, message, to } = await req.json()
 
-    // Create transporter
-    const transporter = nodemailer.createTransport({
-      service: 'gmail',
-      auth: {
-        user: process.env.EMAIL_USER,
-        pass: process.env.EMAIL_PASSWORD,
-      },
+    // Configure OAuth2 client
+    const oauth2Client = new google.auth.OAuth2(
+      process.env.GOOGLE_CLIENT_ID,
+      process.env.GOOGLE_CLIENT_SECRET,
+      process.env.REDIRECT_URI
+    )
+    
+    // Set credentials
+    oauth2Client.setCredentials({
+      refresh_token: process.env.GOOGLE_REFRESH_TOKEN
     })
 
+    // Create Gmail API client
+    const gmail = google.gmail({
+      version: 'v1',
+      auth: oauth2Client
+    })
+
+    // Create email content
+    const emailContent = `From: ${process.env.EMAIL_USER}
+    To: ${to}
+    Subject: New BabyGPT Contact Form Submission
+    Content-Type: text/html; charset=utf-8
+
+    <h2>New Contact Form Submission</h2>
+    <p><strong>From:</strong> ${email}</p>
+    <p><strong>Message:</strong></p>
+    <p>${message}</p>`
+
+    // Encode the email
+    const encodedEmail = Buffer.from(emailContent)
+      .toString('base64')
+      .replace(/\+/g, '-')
+      .replace(/\//g, '_')
+      .replace(/=+$/, '')
+
     // Send email
-    await transporter.sendMail({
-      from: process.env.EMAIL_USER,
-      to,
-      subject: 'New BabyGPT Contact Form Submission',
-      text: `From: ${email}\n\nMessage: ${message}`,
-      html: `
-        <h2>New Contact Form Submission</h2>
-        <p><strong>From:</strong> ${email}</p>
-        <p><strong>Message:</strong></p>
-        <p>${message}</p>
-      `,
+    await gmail.users.messages.send({
+      userId: 'me',
+      requestBody: {
+        raw: encodedEmail
+      }
     })
 
     return NextResponse.json({ success: true })
