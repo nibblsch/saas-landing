@@ -67,7 +67,7 @@ export async function GET(req: NextRequest) {
   } catch (error) {
     console.error('Callback error:', error)
     return NextResponse.redirect(
-      new URL('/?error=auth&message='   encodeURIComponent(error.message), req.url)
+      new URL('/?error=auth&message=' + encodeURIComponent(error.message), req.url)
     )
   }
 }
