@@ -24,19 +24,6 @@ import PostHog from "posthog-js";
 }
   */}
 
-// Initialize Meta Pixel
-export function FacebookPixel() {
-  useEffect(() => {
-    import("react-facebook-pixel")
-      .then((x) => x.default)
-      .then((ReactPixel) => {
-        ReactPixel.init("your-pixel-id");
-        ReactPixel.pageView();
-      });
-  }, []);
-
-  return null;
-}
 
 interface Message {
   role: "user" | "assistant";
@@ -112,9 +99,7 @@ export default function SuccessPage() {
   };
 
   return (
-    <div className="flex h-screen flex-col bg-white">
-      <FacebookPixel />
-      
+    <div className="flex h-screen flex-col bg-white">  
       {/* Welcome Popup */}
       {showWelcome && (
         <div className="fixed inset-0 z-50">

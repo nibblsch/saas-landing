@@ -22,6 +22,8 @@ export default function HomePage() {
   );
   const posthog = usePostHog();
   const sessionId = searchParams.get('session_id');
+  const [isHydrated, setIsHydrated] = useState(false); // ✅ Add state for hydration fix
+
   
   const [selectedPlanData, setSelectedPlanData] = useState<{
     id: string;
@@ -37,6 +39,12 @@ export default function HomePage() {
     setIsSignupOpen(true);
   };
 
+  useEffect(() => {
+          if (typeof window !== 'undefined') {
+            setIsHydrated(true);
+         }
+        }, []);
+      
   // Track page view on mount
   useEffect(() => {
     posthog?.capture('landing_page_viewed', {
@@ -207,12 +215,14 @@ export default function HomePage() {
               <p className="text-xl text-gray-600 max-w-2xl mx-auto mb-8">
                 Get instant, evidence-based answers to all your parenting questions
               </p>
+              {!isHydrated ? null : (  // ✅ Prevent UI from rendering before hydration
               <Button
                 onClick={handleOpenSignup}
                 className="text-lg px-8 py-3 bg-blue-600 hover:bg-blue-700 text-white rounded-full"
               >
                 Try BabyGPT Free
               </Button>
+              )}
             </div>
           </div>
         </section>

@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { Geist, Geist_Mono, Inter } from "next/font/google";
+import { Geist, Geist_Mono } from "next/font/google"; //(removed Inter)
 import "./globals.css";
 import { AuthProvider } from '@/context/AuthContext'
 import { PostHogProvider } from './providers'
@@ -16,7 +16,7 @@ const geistMono = Geist_Mono({
   subsets: ["latin"],
 });
 
-const inter = Inter({ subsets: ['latin'] });
+//const inter = Inter({ subsets: ['latin'] });  //not used?
 
 export const metadata: Metadata = {
   title: "BabyGPT",

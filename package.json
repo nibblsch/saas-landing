@@ -41,7 +41,7 @@
     "@radix-ui/react-toggle-group": "^1.1.0",
     "@radix-ui/react-tooltip": "^1.1.2",
     "@stripe/stripe-js": "^5.6.0",
-    "@supabase/auth-helpers-nextjs": "^0.10.0",
+    "@supabase/ssr": "^0.5.2",
     "@supabase/supabase-js": "^2.48.1",
     "@types/nodemailer": "^6.4.17",
     "@types/react-google-recaptcha": "^2.1.9",

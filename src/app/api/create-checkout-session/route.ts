@@ -2,11 +2,11 @@
  * FILE: src/app/api/create-checkout-session/route.ts
  * PURPOSE: Creates Stripe checkout sessions for subscription purchases
  *******************************************/
-import { createRouteHandlerClient } from '@supabase/auth-helpers-nextjs'
+import { createServerClient } from '@supabase/ssr';
 import { cookies } from 'next/headers'
 import { NextResponse } from 'next/server'
 import { stripe } from '@/lib/stripe'
-import { PRICING_PLANS } from '@/config/stripeConfig';
+//import { PRICING_PLANS } from '@/config/stripeConfig'; //not used?
 
 export async function POST(request: Request) {
   try {
@@ -29,8 +29,13 @@ export async function POST(request: Request) {
     console.log('Using Stripe price ID:', priceId)
     
     // 3. Get authenticated user session - Supabase client
-    const cookieStore = await cookies()
-    const supabase = createRouteHandlerClient({ cookies: () => cookieStore })
+    const cookieStore = cookies()
+    const cookieStore = cookies(); // No need to await
+const supabase = createServerClient(
+  process.env.NEXT_PUBLIC_SUPABASE_URL!,
+  process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+  { cookies: () => cookieStore } // Corrected usage
+);
     // Get user session
     const { data: { session }, error: authError } = await supabase.auth.getSession()
     
@@ -99,10 +104,10 @@ export async function POST(request: Request) {
       customerId 
     })
 
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error('Checkout error:', error)
     return NextResponse.json(
-      { error: error.message || 'Internal server error' },
+      { error: (error as Error).message || 'Internal server error' },
       { status: 500 }
     )
   }

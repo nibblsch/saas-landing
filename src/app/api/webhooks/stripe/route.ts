@@ -3,8 +3,8 @@
  * PURPOSE: Handles Stripe webhook events for updating billing info
  *******************************************/
 
-import { createRouteHandlerClient } from '@supabase/auth-helpers-nextjs'
-import { cookies } from 'next/headers'
+import { createServerClient } from '@supabase/ssr'
+//import { cookies } from 'next/headers' //not required by new supabase version
 import { NextResponse } from 'next/server'
 import { stripe } from '@/lib/stripe'
 
@@ -22,16 +22,25 @@ export async function POST(request: Request) {
         signature,
         process.env.STRIPE_WEBHOOK_SECRET!
       )
-    } catch (err: any) {
+    } catch (err: unknown) {
       return NextResponse.json(
-        { error: `Webhook signature verification failed: ${err.message}` },
+        { error: `Webhook signature verification failed: ${(err as Error).message}` },
         { status: 400 }
       )
     }
 
     // Get Supabase client
-    const cookieStore = cookies()
-    const supabase = createRouteHandlerClient({ cookies: () => cookieStore })
+    
+    const supabase = createServerClient(
+            process.env.NEXT_PUBLIC_SUPABASE_URL!,
+            process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+            {
+              cookies: {
+                getAll: async () => [],
+                setAll: async () => {},
+              }
+            }
+          );
 
     // Handle different webhook events
     if (event.type === 'checkout.session.completed') {

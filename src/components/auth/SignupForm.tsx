@@ -5,7 +5,7 @@ import { Button } from '../ui/button'
 import { FcGoogle } from 'react-icons/fc'
 import { FaApple, FaTiktok } from 'react-icons/fa'
 // ADD back the Google auth function
-import { signInWithGoogle } from '@/lib/auth'
+import { signInWithGoogle, signInWithApple, signInWithTikTok } from '@/lib/auth'
 import { loadStripe } from '@stripe/stripe-js'
 import { PRICING_PLANS } from '@/config/stripeConfig';
 import { STRIPE_PUBLISHABLE_KEY } from '@/config/stripeConfig'; // 🟢 Import existing key logic
@@ -194,11 +194,14 @@ export function SignupForm({
       if (!recaptchaRef.current) {
            throw new Error('reCAPTCHA not yet loaded')
          }
-           const token = await new Promise<string | null>((resolve) => {
+         const token = await recaptchaRef.current.executeAsync();  //added .executeAsync and replaced below code.
+          {/*
+            const token = await new Promise<string | null>((resolve) => {
             recaptchaRef.current?.execute()
               .then(token => resolve(token))
               .catch(() => resolve(null));
           });
+          */}
           if (!token) {
             posthog?.capture('signup_error', {
                        error_type: 'recaptcha_failed'
@@ -226,7 +229,7 @@ export function SignupForm({
         timestamp: new Date().toISOString()
       })
       // Proceed with signup process
-      setStep('profile')
+      setStep('details')
     } catch (err) {
       posthog?.capture('signup_error', {
         error_type: err instanceof Error ? err.message : 'unknown_error',
@@ -245,7 +248,7 @@ export function SignupForm({
     
     try {
       posthog?.capture('signup_step_completed', {
-        signup_step: 'profile',
+        signup_step: 'details',
         has_child_age: !!profileData.childAgeMonths,
         timestamp: new Date().toISOString()
       })
@@ -254,7 +257,7 @@ export function SignupForm({
       await handlePaymentStart()
     } catch (err: any) {
       posthog?.capture('signup_error', {
-        signup_step: 'profile',
+        signup_step: 'details',
         error: err.message,
         timestamp: new Date().toISOString()
       })
@@ -282,7 +285,7 @@ export function SignupForm({
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
-            planInterval: selectedPlan.interval,  // Send 'monthly' or 'annually' instead of ID
+            planInterval: selectedPlan?.interval,  // Send 'monthly' or 'annually' instead of ID
             customerName: profileData.name,  // Keep this as it's used for new customer creation
             customerEmail: formData.email
           })
@@ -415,7 +418,7 @@ export function SignupForm({
         {/* Continue button */}
         <Button 
           type="submit" 
-          className="w-full"
+          className="w-full bg-blue-600 hover:bg-blue-700 text-white rounded-lg py-3"
           disabled={isLoading || !selectedPlan}
         >
           {isLoading ? 'Please wait...' : 'Continue to Payment'}
@@ -519,8 +522,8 @@ export function SignupForm({
 
           <Button 
             type="submit" 
-            className="w-full"
-            variant={mode === 'signin' ? 'primary' : 'success'}
+            className="w-full bg-blue-600 hover:bg-blue-700 text-white"
+            variant={mode === 'signin' ? 'default' : 'destructive'}
             disabled={isLoading}
           >
             {isLoading ? 'Please wait...' : mode === 'signin' ? 'Sign in' : 'Create Account'}
@@ -547,7 +550,7 @@ export function SignupForm({
   
 
   // Main render
-  if (step === 'profile' || step === 'details') {
+  if (step === 'details') {
     return renderProfileAndDetails()
   }
 
@@ -569,7 +572,7 @@ export function SignupForm({
           transform: scale(0.6) !important;
         }
       `}</style>
-        {step === 'profile' || step === 'details' ? renderProfileAndDetails() : renderInitialForm()}
+        {step === 'details' ? renderProfileAndDetails() : renderInitialForm()}
       </>
     ) 
 }

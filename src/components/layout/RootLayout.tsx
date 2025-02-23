@@ -10,7 +10,7 @@ type RootLayoutProps = {
 export default function RootLayout({ children }: RootLayoutProps) {
   return (
     <div className="min-h-screen flex flex-col">
-      <Header />
+      <Header onOpenSignup={() => console.log('Signup clicked')} />
       <main className="flex-grow">
         {children}
       </main>

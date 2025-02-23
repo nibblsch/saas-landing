@@ -20,36 +20,3 @@ export default function Auth() {
 
   return <div>Redirecting to Google...</div>;
 }
-
-// pages/auth/callback.tsx
-import { useEffect } from 'react';
-import { google } from 'googleapis';
-
-export default function AuthCallback() {
-  useEffect(() => {
-    const getToken = async () => {
-      const urlParams = new URLSearchParams(window.location.search);
-      const code = urlParams.get('code');
-
-      if (code) {
-        const oauth2Client = new google.auth.OAuth2(
-          process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID,
-          process.env.GOOGLE_CLIENT_SECRET,
-          'http://localhost:3000/auth/callback'
-        );
-
-        try {
-          const { tokens } = await oauth2Client.getToken(code);
-          console.log('Refresh Token:', tokens.refresh_token);
-          // Store this refresh_token in your .env file
-        } catch (error) {
-          console.error('Error getting tokens:', error);
-        }
-      }
-    };
-
-    getToken();
-  }, []);
-
-  return <div>Processing authentication...</div>;
-}

@@ -1,5 +1,5 @@
-import { createRouteHandlerClient } from '@supabase/auth-helpers-nextjs'
-import { cookies } from 'next/headers'
+import { createServerClient } from '@supabase/ssr'
+//import { cookies } from 'next/headers'
 import { NextRequest, NextResponse } from 'next/server'
 
 export async function GET(req: NextRequest) {
@@ -16,8 +16,16 @@ export async function GET(req: NextRequest) {
     }
 
     if (code) {
-      const cookieStore = cookies()
-      const supabase = createRouteHandlerClient({ cookies: () => cookieStore })
+      const supabase = createServerClient(
+        process.env.NEXT_PUBLIC_SUPABASE_URL!,
+        process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+        {
+          cookies: {
+            getAll: async () => [],
+            setAll: async () => {},
+          }
+        }
+      );
 
       const { data: { session }, error } = await supabase.auth.exchangeCodeForSession(code)
       if (error) throw error
@@ -67,7 +75,7 @@ export async function GET(req: NextRequest) {
   } catch (error) {
     console.error('Callback error:', error)
     return NextResponse.redirect(
-      new URL('/?error=auth&message=' + encodeURIComponent(error.message), req.url)
+      new URL('/?error=auth&message=' + encodeURIComponent((error as Error).message), req.url)
     )
   }
 }

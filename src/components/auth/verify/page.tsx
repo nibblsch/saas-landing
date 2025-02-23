@@ -16,7 +16,7 @@ export default function VerifyPage() {
       try {
         // Get tokens from URL
         const token_hash = searchParams.get('token_hash')
-        const type = searchParams.get('type')
+        const type = searchParams.get('type') as "sms" | "email";
         const next = searchParams.get('next') ?? '/pricing'
 
         if (token_hash && type) {

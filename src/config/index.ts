@@ -1,5 +1,5 @@
 // ADD NEW FILE: src/config/index.ts
-const config = {
+const config: Record<string, { siteUrl: string; redirectUrls?: { emailVerification: string; successCheckout: string; } }> = {
     development: {
       siteUrl: 'http://localhost:3000',
       redirectUrls: {
@@ -9,12 +9,12 @@ const config = {
       }
     },
     production: {
-      siteUrl: 'https://yourdomain.com',
+      siteUrl: 'https://babygpt.netlify.app',
       redirectUrls: {
-        emailVerification: 'https://yourdomain.com/auth/verify',
-        successCheckout: 'https://yourdomain.com/success',
+        emailVerification: 'https://babygpt.netlify.app/verify',
+        successCheckout: 'https://babygpt.netlify.app/success',
       }
     }
   }
   
-  export default config[process.env.NODE_ENV || 'development']
+  export default config[process.env.NODE_ENV || 'development'];

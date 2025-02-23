@@ -19,9 +19,9 @@ export const STRIPE_SECRET_KEY = isProduction
 
   export const PRICING_PLANS = {
   monthly: {
-    /*id: isProduction
+    id: isProduction
       ? process.env.STRIPE_PRICE_MONTHLY_PROD
-      : process.env.STRIPE_PRICE_MONTHLY_TEST,*/
+      : process.env.STRIPE_PRICE_MONTHLY_TEST,
     price: 29.99, // Can Change prices if needed from prod to test
     name: 'Monthly',
     interval: 'monthly', // Added for plan identification
@@ -34,9 +34,9 @@ export const STRIPE_SECRET_KEY = isProduction
     ] // 🟢 Added features array
     },
   annually: {
-    /*id: isProduction
+    id: isProduction
       ? process.env.STRIPE_PRICE_ANNUALLY_PROD
-      : process.env.STRIPE_PRICE_ANNUALLY_TEST,*/
+      : process.env.STRIPE_PRICE_ANNUALLY_TEST,
     price: 23.99, // Can Change prices if needed from prod to test
     name: 'Annual',
     interval: 'annually', // Added for plan identification

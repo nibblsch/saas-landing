@@ -9,7 +9,7 @@ if (typeof window !== 'undefined' && process.env.NODE_ENV === 'production') {
     capture_pageview: true,      // Automatically capture pageviews
     capture_pageleave: true,     // Track when users leave pages
     bootstrap: {                 // Set initial user properties
-      browser: navigator.userAgent
+      //browser: navigator.userAgent
     }
   })
 }

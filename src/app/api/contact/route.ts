@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server'
-import nodemailer from 'nodemailer'
+//import nodemailer from 'nodemailer' //Never used
 import { google } from 'googleapis';  // ✅ Ensure google is imported
 
 export async function POST(req: Request) {

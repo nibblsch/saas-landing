@@ -1,5 +1,6 @@
 // Manages auth state and functions for the entire app
 import { createClient } from '@supabase/supabase-js'
+import { createClientComponentClient } from "@supabase/auth-helpers-nextjs"; // ✅ Frontend (Client)
 
 // Create Supabase client
 const supabase = createClient(

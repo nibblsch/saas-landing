@@ -1,12 +1,21 @@
 'use client'
 
-import { createClientComponentClient } from '@supabase/auth-helpers-nextjs'
+import { createServerClient } from '@supabase/ssr'
 import { useEffect } from 'react'
 
 function AuthPage() {
   useEffect(() => {
     const initiateAuth = async () => {
-      const supabase = createClientComponentClient()
+      const supabase = createServerClient(
+        process.env.NEXT_PUBLIC_SUPABASE_URL!,
+        process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+        {
+          cookies: {
+            getAll: async () => [],
+            setAll: async () => {},
+          }
+        }
+      );
       
       try {
         const { data, error } = await supabase.auth.signInWithOAuth({
